@@ -83,8 +83,6 @@ init([]) ->
 			      [sc_event_logger, []]},
 	     Restart, Shutdown, Type, [sc_event_guard]},
 
-
-
     {ok, {SupFlags, [Event, Guard, ElementSup]}}.
 
 %%%===================================================================
