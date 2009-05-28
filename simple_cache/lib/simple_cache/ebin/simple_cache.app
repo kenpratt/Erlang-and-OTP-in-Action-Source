@@ -1,6 +1,6 @@
 %% This is the application resource file (.app file) for the simple_cache,
 %% application.
-{application, simple_cache, 
+{application, simple_cache,
   [{description, "A simple simple caching system"},
    {vsn, "0.1.0"},
    {modules, [simple_cache,
