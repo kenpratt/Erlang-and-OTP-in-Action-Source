@@ -1,0 +1,5 @@
+[{kernel,"2.13.1",[],"/usr/local/erlware/packages/5.7.1/lib/kernel-2.13.1"},
+ {stdlib,"1.16.1",
+         [kernel],
+         "/usr/local/erlware/packages/5.7.1/lib/stdlib-1.16.1"},
+ {eunit,"2.0",[stdlib],"/usr/local/erlware/packages/5.7.1/lib/eunit-2.0"}].
