@@ -1,31 +1,28 @@
 %%%-------------------------------------------------------------------
-%%% @author Martin Logan <martinjlogan@Macintosh.local>
-%%% @copyright (C) 2008, Martin Logan
+%%% @author Eric Merritt <cyberlync@cyberlync-laptop>
+%%% @copyright (C) 2009, PEAK6 LP
 %%% @doc
-%%%  Stores a single cache element.
+%%%  This is an process that will start up and run for two seconds and
+%%%  then die. Its whole purpose is to die and show the SASL logs output
+%%%  on process death.
 %%% @end
-%%% Created : 14 Dec 2008 by Martin Logan <martinjlogan@Macintosh.local>
+%%% Created :  4 Apr 2009 by Eric Merritt <cyberlync@cyberlync-laptop>
 %%%-------------------------------------------------------------------
--module(sc_element).
+-module(die_please).
 
 -behaviour(gen_server).
 
 %% API
--export([
-	 start_link/1,
-	 create/1,
-	 fetch/1,
-	 replace/2,
-	 delete/1
-	]).
+-export([start_link/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE).
+-define(SLEEP_TIME, 2*1000).
 
--record(state, {value}).
+-record(state, {}).
 
 %%%===================================================================
 %%% API
@@ -35,51 +32,11 @@
 %% @doc
 %% Starts the server
 %%
-%% @spec start_link(Value) -> {ok, Pid} | ignore | {error, Error}
+%% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link(Value) ->
-    gen_server:start_link(?MODULE, [Value], []).
-
-%%--------------------------------------------------------------------
-%% @doc
-%%  Create an element in the cache
-%%
-%% @spec create(Value) -> void()
-%% @end
-%%--------------------------------------------------------------------
-create(Value) ->
-    sc_element_sup:start_child(Value).
-
-%%--------------------------------------------------------------------
-%% @doc
-%% Fetch an element from the cache.
-%%
-%% @spec fetch(Pid) -> {ok, Value} | {error, Reason}
-%% @end
-%%--------------------------------------------------------------------
-fetch(Pid) ->
-    gen_server:call(Pid, fetch).
-
-%%--------------------------------------------------------------------
-%% @doc
-%% Replace an element in the cache.
-%%
-%% @spec replace(Value) -> ok | {error, Reason}
-%% @end
-%%--------------------------------------------------------------------
-replace(Pid, Value) ->
-    gen_server:cast(Pid, {replace, Value}).
-
-%%--------------------------------------------------------------------
-%% @doc
-%% Delete an element from the cache.
-%%
-%% @spec delete(Pid) -> ok
-%% @end
-%%--------------------------------------------------------------------
-delete(Pid) ->
-    gen_server:cast(Pid, delete).
+start_link() ->
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -96,8 +53,8 @@ delete(Pid) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([Value]) ->
-    {ok, #state{value = Value}}.
+init([]) ->
+    {ok, #state{}, ?SLEEP_TIME}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -113,8 +70,9 @@ init([Value]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call(fetch, _From, #state{value = Value} = State) ->
-    {reply, {ok, Value}, State}.
+handle_call(_Request, _From, State) ->
+    Reply = ok,
+    {reply, Reply, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -126,11 +84,8 @@ handle_call(fetch, _From, #state{value = Value} = State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast({replace, Value}, State) ->
-    {noreply, State#state{value = Value}};
-handle_cast(delete, State) ->
-    {stop, ok, State}.
-
+handle_cast(_Msg, State) ->
+    {noreply, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -142,7 +97,8 @@ handle_cast(delete, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(_Info, State) ->
+handle_info(timeout, State) ->
+    i_want_to_die = right_now,
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -157,7 +113,6 @@ handle_info(_Info, State) ->
 %% @end
 %%--------------------------------------------------------------------
 terminate(_Reason, _State) ->
-    sc_store:delete(self()),
     ok.
 
 %%--------------------------------------------------------------------
