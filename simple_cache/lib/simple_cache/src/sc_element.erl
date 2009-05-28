@@ -97,6 +97,7 @@ delete(Pid) ->
 %% @end
 %%--------------------------------------------------------------------
 init([Value]) ->
+    sc_store:insert(self()), %% This should be the last thing we do in init/1.
     {ok, #state{value = Value}}.
 
 %%--------------------------------------------------------------------
