@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 11 Jan 2009 by Martin Logan <martinjlogan@Macintosh.local>
 %%%-------------------------------------------------------------------
--module(sc_sup).
+-module(sc_element_sup).
 
 -behaviour(supervisor).
 
@@ -63,9 +63,9 @@ start_child(Value) ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    RestartStrategy = one_for_one,
-    MaxRestarts = 1000,
-    MaxSecondsBetweenRestarts = 3600,
+    RestartStrategy = simple_one_for_one,
+    MaxRestarts = 0,
+    MaxSecondsBetweenRestarts = 1,
 
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
 
@@ -73,19 +73,10 @@ init([]) ->
     Shutdown = brutal_kill,
     Type = worker,
 
-    ElementSup = {sc_element_sup, {sc_element_sup, start_link, []},
-		  Restart, Shutdown, supervisor, [sc_element]},
+    AChild = {sc_element, {sc_element, start_link, []},
+	      Restart, Shutdown, Type, [sc_element]},
 
-    Event = {sc_event, {sc_event, start_link, []},
-	     Restart, Shutdown, Type, [sc_event]},
-
-    Guard = {sc_event_guard, {sc_event_guard, start_link,
-			      [sc_event_logger, []]},
-	     Restart, Shutdown, Type, [sc_event_guard]},
-
-
-
-    {ok, {SupFlags, [Event, Guard, ElementSup]}}.
+    {ok, {SupFlags, [AChild]}}.
 
 %%%===================================================================
 %%% Internal functions
