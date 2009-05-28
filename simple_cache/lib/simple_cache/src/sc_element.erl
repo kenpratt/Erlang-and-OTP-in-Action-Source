@@ -1,4 +1,4 @@
-%%%-------------------------------------------------------------------
+\%%%-------------------------------------------------------------------
 %%% @author Martin Logan <martinjlogan@Macintosh.local>
 %%% @copyright (C) 2008, Martin Logan
 %%% @doc
@@ -130,6 +130,7 @@ handle_cast({replace, Value}, State) ->
     {noreply, State#state{value = Value}};
 handle_cast(delete, State) ->
     {stop, ok, State}.
+
 
 %%--------------------------------------------------------------------
 %% @private

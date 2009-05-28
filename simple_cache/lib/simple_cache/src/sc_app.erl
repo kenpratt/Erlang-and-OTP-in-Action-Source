@@ -1,4 +1,4 @@
-%%%----------------------------------------------------------------
+\%%%----------------------------------------------------------------
 %%% @author Martin Logan & Eric Merritt <contact@erlware.org>
 %%% @doc
 %%%
@@ -83,17 +83,17 @@ ensure_contact([Node|T]) ->
     end;
 ensure_contact([]) ->
     {error, no_contact_nodes_reachable}.
-			 
-wait_for_nodes(ContactNodes, WaitTime) ->    
+
+wait_for_nodes(ContactNodes, WaitTime) ->
     wait_for_nodes(ContactNodes, round(WaitTime / 3), 3).
 
 wait_for_nodes(_, _, 0) ->
     ok;
-wait_for_nodes(ContactNodes, WaitSlice, Iterations) ->    
-    case length(nodes()) > length(ContactNodes) of 
+wait_for_nodes(ContactNodes, WaitSlice, Iterations) ->
+    case length(nodes()) > length(ContactNodes) of
 	true ->
 	    ok;
-	false -> 
+	false ->
 	    timer:sleep(WaitSlice),
 	    wait_for_nodes(ContactNodes, WaitSlice, Iterations - 1)
     end.
@@ -103,4 +103,4 @@ get_env(AppName, Key, Default) ->
 	undefined -> {ok, Default};
 	Found     -> Found
     end.
-	    
+

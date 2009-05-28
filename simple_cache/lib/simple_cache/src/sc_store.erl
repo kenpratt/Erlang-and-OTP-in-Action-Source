@@ -33,7 +33,7 @@
 init() ->
     {ok, CacheNodes} = resource_discovery:fetch_resources(simple_cache),
     dynamic_db_init(lists:delete(node(), CacheNodes)).
-    
+
 %%--------------------------------------------------------------------
 %% @doc Delete an element by pid from the registrar.
 %% @spec delete(Pid) -> void()
@@ -43,7 +43,7 @@ delete(Pid) ->
     try
 	[#key_to_pid{} = Record] = mnesia:dirty_index_read(key_to_pid, Pid, #key_to_pid.pid),
 	mnesia:dirty_delete_object(Record)
-    catch 
+    catch
 	_C:_E -> ok
     end.
 
@@ -69,12 +69,11 @@ lookup(Key) ->
 %%--------------------------------------------------------------------
 insert(Key, Pid) when is_pid(Pid) ->
     Fun = fun() -> mnesia:write(#key_to_pid{key = Key, pid = Pid}) end,
-    {atomic, _} = mnesia:transaction(Fun). 
+    {atomic, _} = mnesia:transaction(Fun).
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
 dynamic_db_init([]) ->
     delete_schema(),
     mnesia:create_schema([node()]),
@@ -92,7 +91,7 @@ delete_schema() ->
 
 add_extra_nodes([Node|T]) ->
     case mnesia:change_config(extra_db_nodes, [Node]) of
-        {ok, [Node]} -> 
+        {ok, [Node]} ->
             Res = mnesia:add_table_copy(schema, node(), ram_copies),
             error_logger:info_msg("remote_init schema type ~p~n", [Res]),
 
@@ -101,7 +100,7 @@ add_extra_nodes([Node|T]) ->
 
             Tables = mnesia:system_info(tables),
             mnesia:wait_for_tables(Tables, ?WAIT_FOR_TABLES);
-        _ -> 
+        _ ->
             add_extra_nodes(T)
     end.
-    
+
