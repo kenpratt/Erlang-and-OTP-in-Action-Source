@@ -54,7 +54,6 @@ lookup(Key) ->
 	{error, Reason} ->
 	    {error, Reason}
     end.
-
 %%--------------------------------------------------------------------
 %% @doc delete an element into the cache.
 %% @spec delete(Key) -> ok
