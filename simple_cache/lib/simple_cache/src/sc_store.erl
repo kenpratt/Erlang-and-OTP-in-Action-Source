@@ -104,4 +104,3 @@ add_extra_nodes([Node|T]) ->
         _ -> 
             add_extra_nodes(T)
     end.
-    
