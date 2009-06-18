@@ -30,11 +30,12 @@
 insert(Key, Value) ->
     case sc_store:lookup(Key) of
 	{ok, Pid} ->
-	    sc_event:replace(Key),
+	    sc_event:replace(Key, Value),
 	    sc_element:replace(Pid, Value);
 	{error, _Reason} ->
-	    sc_event:create(Key, Value),
-	    sc_element:create(Key, Value)
+	    {ok, Pid} = sc_element:create(Value),
+	    sc_store:insert(Key, Pid),
+	    sc_event:create(Key, Value)
     end.
 
 %%--------------------------------------------------------------------
@@ -53,6 +54,7 @@ lookup(Key) ->
 	{error, Reason} ->
 	    {error, Reason}
     end.
+
 %%--------------------------------------------------------------------
 %% @doc delete an element into the cache.
 %% @spec delete(Key) -> ok
