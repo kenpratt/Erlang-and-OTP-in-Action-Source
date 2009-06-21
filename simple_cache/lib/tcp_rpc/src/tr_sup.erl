@@ -1,20 +1,23 @@
-%%%----------------------------------------------------------------
-%%% @author  Martin Logan <martinjlogan@erlware.org>
+%%%-------------------------------------------------------------------
+%%% @author Martin Logan <martinjlogan@Macintosh.local>
+%%% @copyright (C) 2009, Martin Logan
 %%% @doc
+%%%  simple one for one supervisor for handling the tcp server.
 %%% @end
-%%% @copyright 2008 Martin Logan
-%%%----------------------------------------------------------------
+%%% Created : 13 May 2009 by Martin Logan <martinjlogan@Macintosh.local>
+%%%-------------------------------------------------------------------
 -module(tr_sup).
 
 -behaviour(supervisor).
 
 %% API
--export([start_link/0]).
+-export([start_link/0, start_link/1, start_child/0]).
 
 %% Supervisor callbacks
 -export([init/1]).
 
 -define(SERVER, ?MODULE).
+-define(PORT, 1055).
 
 %%%===================================================================
 %%% API functions
@@ -24,11 +27,29 @@
 %% @doc
 %% Starts the supervisor
 %%
-%% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
+%% @spec start_link(Port) -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
+start_link(Port) ->
+    supervisor:start_link({local, ?SERVER}, ?MODULE, [Port]).
+
+%% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
+%% @equiv start_link(Port) 
 start_link() ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
+    case application:get_env(tcp_rpc, port) of
+	{ok, Port} -> start_link(Port);
+	undefined  -> start_link(?PORT)
+    end.
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Start a child process, an sc_connection.
+%%
+%% @spec start_child() -> void()
+%% @end
+%%--------------------------------------------------------------------
+start_child() ->
+    supervisor:start_child(?SERVER, []).
 
 %%%===================================================================
 %%% Supervisor callbacks
@@ -47,24 +68,24 @@ start_link() ->
 %%                     {error, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([]) ->
-    RestartStrategy = one_for_one,
-    MaxRestarts = 1000,
-    MaxSecondsBetweenRestarts = 3600,
-
+init([Port]) ->
+    RestartStrategy = simple_one_for_one,
+    MaxRestarts = 0,
+    MaxSecondsBetweenRestarts = 1,
+    
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
-
-    Restart = permanent,
-    Shutdown = 2000,
+    
+    Restart = temporary,
+    Shutdown = brutal_kill,
     Type = worker,
+    
+    {ok, LSock} = gen_tcp:listen(Port, [{active, true}]),
 
-    AChild = {tr_server, {tr_server, start_link, []},
-              Restart, Shutdown, Type, [tr_server]},
-
+    AChild = {tr_server, {tr_server, start_link, [LSock]},
+	      Restart, Shutdown, Type, [tr_server]},
+    
     {ok, {SupFlags, [AChild]}}.
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
-

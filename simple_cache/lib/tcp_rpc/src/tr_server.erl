@@ -146,8 +146,9 @@ handle_info({tcp, Socket, RawData}, State) ->
     end,
     {noreply, State#state{request_count = RequestCount + 1}};
 handle_info(timeout, #state{lsock = LSock} = State) ->
-        {ok, _Sock} = gen_tcp:accept(LSock),
-        {noreply, State}.
+    {ok, _Sock} = gen_tcp:accept(LSock),
+    tr_sup:start_child(),
+    {noreply, State}.
 
 %%--------------------------------------------------------------------
 %% @private
