@@ -14,6 +14,7 @@
 %% API
 -export([
 	 start_link/1,
+	 start_link/0,
 	 get_count/0,
 	 stop/0
 	]).
@@ -23,8 +24,9 @@
 	 terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE). 
+-define(DEFAULT_PORT, 1055).
 
--record(state, {port = 1055, lsock, request_count = 0}).
+-record(state, {port, lsock, request_count = 0}).
 
 %%%===================================================================
 %%% API
@@ -34,11 +36,16 @@
 %% @doc
 %% Starts the server
 %%
-%% @spec start_link(Port::integer()) -> {ok, Pid} | ignore | {error, Error}
+%% @spec start_link(Port::integer()) -> {ok, Pid} 
 %% @end
 %%--------------------------------------------------------------------
 start_link(Port) ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [Port], []).
+
+%% @spec start_link() -> {ok, Pid} 
+%% @equiv start_link(Port::integer())
+start_link() ->
+    start_link(?DEFAULT_PORT).
 
 %%--------------------------------------------------------------------
 %% @doc fetch the number of requests made to this server.
@@ -139,9 +146,9 @@ handle_info({tcp, Socket, RawData}, State) ->
 	gen_tcp:send(Socket,
 		     lists:flatten(io_lib:fwrite("~p~n", [Result])))
     catch 
-	_C:_E ->
+	_C:E ->
 	    gen_tcp:send(Socket,
-			 lists:flatten(io_lib:fwrite("~p~n", [Result])))
+			 lists:flatten(io_lib:fwrite("~p~n", [E])))
     end,
     {noreply, State#state{request_count = RequestCount + 1}};
 handle_info(timeout, #state{lsock = LSock} = State) ->
