@@ -4,7 +4,7 @@
 %%% @end
 %%% @copyright 2008 Martin Logan
 %%%----------------------------------------------------------------
--module(telnet_server_sup).
+-module(tr_sup).
 
 -behaviour(supervisor).
 
@@ -58,8 +58,8 @@ init([]) ->
     Shutdown = 2000,
     Type = worker,
 
-    AChild = {'AName', {'AModule', start_link, []},
-              Restart, Shutdown, Type, ['AModule']},
+    AChild = {tr_server, {tr_server, start_link, []},
+              Restart, Shutdown, Type, [tr_server]},
 
     {ok, {SupFlags, [AChild]}}.
 

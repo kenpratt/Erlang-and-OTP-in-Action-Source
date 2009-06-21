@@ -5,7 +5,7 @@
 %%% @end
 %%% @copyright 2008 Martin Logan
 %%%----------------------------------------------------------------,
--module(telnet_server_app).
+-module(tr_app).
 
 -behaviour(application).
 
@@ -33,7 +33,7 @@
 %% @end
 %%--------------------------------------------------------------------
 start(_StartType, _StartArgs) ->
-    case telnet_server_sup:start_link() of
+    case tr_sup:start_link() of
         {ok, Pid} ->
             {ok, Pid};
         Error ->

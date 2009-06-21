@@ -7,7 +7,7 @@
 %%%      that TCP stream 
 %%% @end
 %%%-------------------------------------------------------------------
--module(ts_server).
+-module(tr_server).
 
 -behaviour(gen_server).
 
@@ -105,7 +105,7 @@ handle_call(get_count, _From, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_cast(stop, State) ->
-    {stop, ok, State}.
+    {stop, normal, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -120,31 +120,28 @@ handle_cast(stop, State) ->
 handle_info({tcp, Socket, RawData}, State) ->
     RequestCount = State#state.request_count,
     try
-	Data         = string:strip(
-			 string:strip(RawData, right, $\n),
-			 right, $\r),
-	
-	[M, F|Args] = string:tokens(Data, "|"),
+	Data = string:strip(
+		 string:strip(RawData, right, $\n),
+		 right, $\r),
+	[M, F|RawArgString] = string:tokens(Data, ":()."),
 	Module      = list_to_atom(M),
 	Function    = list_to_atom(F),
-	Reply = 
-	case Args of
-	    []   -> Module:Function();
-	    Args -> Module:Function(Args)
+	Result = 
+	case RawArgString of
+	    [ArgString] ->
+		io:format("Arg ~p~n", [ArgString]),
+		{ok, Toks, _Line} = erl_scan:string("[" ++ ArgString ++ "]. ", 1),
+		{ok, Args} = erl_parse:parse_term(Toks),
+		io:format("~p ~p ~p", [Module, Function, Args]),
+		apply(Module, Function, Args);
+	    [] ->
+		apply(Module, Function)
 	end,
-
-	case Reply of
-	    ok ->
-		gen_tcp:send(Socket, "ok");
-	    {ok, Atom} when is_atom(Atom) ->
-		gen_tcp:send(Socket, atom_to_list(Atom));
-	    {ok, Integer} when is_integer(Integer) ->
-		gen_tcp:send(Socket, integer_to_list(Integer));
-	    {ok, [H|_] = String} when is_integer(H), H >= $\s, H < 255 ->
-		gen_tcp:send(Socket, String)
-	end
+	gen_tcp:send(Socket,
+		     lists:flatten(io_lib:fwrite("~p~n", [Result])))
     catch 
 	_C:_E ->
+	    io:format("exception ~p~n", [_E]),
 	    gen_tcp:send(Socket, "error - call failed\n")
     end,
     {noreply, State#state{request_count = RequestCount + 1}};
