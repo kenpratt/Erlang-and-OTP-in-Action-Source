@@ -17,7 +17,7 @@
 -export([init/1]).
 
 -define(SERVER, ?MODULE).
--define(PORT, 1055).
+-define(DEFAULT_PORT, 1055).
 
 %%%===================================================================
 %%% API functions
@@ -38,7 +38,7 @@ start_link(Port) ->
 start_link() ->
     case application:get_env(tcp_rpc, port) of
 	{ok, Port} -> start_link(Port);
-	undefined  -> start_link(?PORT)
+	undefined  -> start_link(?DEFAULT_PORT)
     end.
 
 %%--------------------------------------------------------------------

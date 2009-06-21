@@ -35,6 +35,7 @@
 start(_StartType, _StartArgs) ->
     case tr_sup:start_link() of
         {ok, Pid} ->
+	    tr_sup:start_child(),
             {ok, Pid};
         Error ->
             Error

@@ -13,9 +13,7 @@
 
 %% API
 -export([
-	 start_link/1,
-	 get_count/0,
-	 stop/0
+	 start_link/1
 	]).
 
 %% gen_server callbacks
@@ -24,7 +22,7 @@
 
 -define(SERVER, ?MODULE). 
 
--record(state, {port = 1055, lsock, request_count = 0}).
+-record(state, {lsock, request_count = 0}).
 
 %%%===================================================================
 %%% API
@@ -34,29 +32,11 @@
 %% @doc
 %% Starts the server
 %%
-%% @spec start_link(Port::integer()) -> {ok, Pid} | ignore | {error, Error}
+%% @spec start_link(LSock) -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link(Port) ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [Port], []).
-
-%%--------------------------------------------------------------------
-%% @doc fetch the number of requests made to this server.
-%% @spec get_count() -> {ok, Count}
-%% where
-%%  Count = integer()
-%% @end
-%%--------------------------------------------------------------------
-get_count() ->
-    gen_server:call(?SERVER, get_count).
-
-%%--------------------------------------------------------------------
-%% @doc stops the server
-%% @spec stop() -> ok
-%% @end
-%%--------------------------------------------------------------------
-stop() ->
-    gen_server:cast(?SERVER, stop).
+start_link(LSock) ->
+    gen_server:start_link(?MODULE, [LSock], []).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -73,9 +53,8 @@ stop() ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([Port]) ->
-    {ok, LSock} = gen_tcp:listen(Port, [{active, true}]),
-    {ok, #state{port = Port, lsock = LSock}, 0}.
+init([LSock]) ->
+    {ok, #state{lsock = LSock}, 0}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -129,20 +108,18 @@ handle_info({tcp, Socket, RawData}, State) ->
 	Result = 
 	case RawArgString of
 	    [ArgString] ->
-		io:format("Arg ~p~n", [ArgString]),
 		{ok, Toks, _Line} = erl_scan:string("[" ++ ArgString ++ "]. ", 1),
 		{ok, Args} = erl_parse:parse_term(Toks),
-		io:format("~p ~p ~p", [Module, Function, Args]),
 		apply(Module, Function, Args);
 	    [] ->
-		apply(Module, Function)
+		apply(Module, Function, [])
 	end,
 	gen_tcp:send(Socket,
 		     lists:flatten(io_lib:fwrite("~p~n", [Result])))
     catch 
-	_C:_E ->
-	    io:format("exception ~p~n", [_E]),
-	    gen_tcp:send(Socket, "error - call failed\n")
+	_C:E ->
+	    gen_tcp:send(Socket,
+		     lists:flatten(io_lib:fwrite("~p~n", [E])))
     end,
     {noreply, State#state{request_count = RequestCount + 1}};
 handle_info(timeout, #state{lsock = LSock} = State) ->
