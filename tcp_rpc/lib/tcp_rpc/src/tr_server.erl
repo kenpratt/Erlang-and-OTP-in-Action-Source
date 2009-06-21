@@ -129,7 +129,6 @@ handle_info({tcp, Socket, RawData}, State) ->
 	Result = 
 	case RawArgString of
 	    [ArgString] ->
-		io:format("Arg ~p~n", [ArgString]),
 		{ok, Toks, _Line} = erl_scan:string("[" ++ ArgString ++ "]. ", 1),
 		{ok, Args} = erl_parse:parse_term(Toks),
 		io:format("~p ~p ~p", [Module, Function, Args]),
@@ -141,8 +140,8 @@ handle_info({tcp, Socket, RawData}, State) ->
 		     lists:flatten(io_lib:fwrite("~p~n", [Result])))
     catch 
 	_C:_E ->
-	    io:format("exception ~p~n", [_E]),
-	    gen_tcp:send(Socket, "error - call failed\n")
+	    gen_tcp:send(Socket,
+			 lists:flatten(io_lib:fwrite("~p~n", [Result])))
     end,
     {noreply, State#state{request_count = RequestCount + 1}};
 handle_info(timeout, #state{lsock = LSock} = State) ->
