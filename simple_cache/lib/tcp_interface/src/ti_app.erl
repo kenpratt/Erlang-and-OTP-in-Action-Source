@@ -5,7 +5,7 @@
 %%% @end
 %%% @copyright 2008 Martin Logan
 %%%----------------------------------------------------------------,
--module(tr_app).
+-module(ti_app).
 
 -behaviour(application).
 
@@ -33,9 +33,9 @@
 %% @end
 %%--------------------------------------------------------------------
 start(_StartType, _StartArgs) ->
-    case tr_sup:start_link() of
+    case ti_sup:start_link() of
         {ok, Pid} ->
-	    tr_sup:start_child(),
+	    ti_sup:start_child(),
             {ok, Pid};
         Error ->
             Error

@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 13 May 2009 by Martin Logan <martinjlogan@Macintosh.local>
 %%%-------------------------------------------------------------------
--module(tr_sup).
+-module(ti_sup).
 
 -behaviour(supervisor).
 
@@ -81,8 +81,8 @@ init([Port]) ->
     
     {ok, LSock} = gen_tcp:listen(Port, [{active, true}]),
 
-    AChild = {tr_server, {tr_server, start_link, [LSock]},
-	      Restart, Shutdown, Type, [tr_server]},
+    AChild = {ti_server, {ti_server, start_link, [LSock]},
+	      Restart, Shutdown, Type, [ti_server]},
     
     {ok, {SupFlags, [AChild]}}.
 
