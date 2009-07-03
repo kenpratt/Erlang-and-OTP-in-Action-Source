@@ -11,13 +11,12 @@
 -behaviour(supervisor).
 
 %% API
--export([start_link/0, start_link/1, start_child/0]).
+-export([start_link/1, start_child/0]).
 
 %% Supervisor callbacks
 -export([init/1]).
 
 -define(SERVER, ?MODULE).
--define(DEFAULT_PORT, 1055).
 
 %%%===================================================================
 %%% API functions
@@ -27,19 +26,11 @@
 %% @doc
 %% Starts the supervisor
 %%
-%% @spec start_link(Port) -> {ok, Pid} | ignore | {error, Error}
+%% @spec start_link(LSock) -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link(Port) ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, [Port]).
-
-%% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
-%% @equiv start_link(Port) 
-start_link() ->
-    case application:get_env(tcp_rpc, port) of
-	{ok, Port} -> start_link(Port);
-	undefined  -> start_link(?DEFAULT_PORT)
-    end.
+start_link(LSock) ->
+    supervisor:start_link({local, ?SERVER}, ?MODULE, [LSock]).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -68,7 +59,7 @@ start_child() ->
 %%                     {error, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([Port]) ->
+init([LSock]) ->
     RestartStrategy = simple_one_for_one,
     MaxRestarts = 0,
     MaxSecondsBetweenRestarts = 1,
@@ -79,8 +70,6 @@ init([Port]) ->
     Shutdown = brutal_kill,
     Type = worker,
     
-    {ok, LSock} = gen_tcp:listen(Port, [{active, true}]),
-
     AChild = {ti_server, {ti_server, start_link, [LSock]},
 	      Restart, Shutdown, Type, [ti_server]},
     

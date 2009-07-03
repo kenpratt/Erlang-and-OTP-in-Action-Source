@@ -12,6 +12,8 @@
 %% Application callbacks
 -export([start/2, stop/1]).
 
+-define(DEFAULT_PORT, 1055).
+
 %%%===================================================================
 %%% Application callbacks
 %%%===================================================================
@@ -33,7 +35,15 @@
 %% @end
 %%--------------------------------------------------------------------
 start(_StartType, _StartArgs) ->
-    case ti_sup:start_link() of
+    Port = 
+	case application:get_env(tcp_rpc, port) of
+	    {ok, Port_} -> Port_;
+	    undefined   -> ?DEFAULT_PORT
+	end,
+
+    {ok, LSock} = gen_tcp:listen(Port, [{active, true}]),
+
+    case ti_sup:start_link(LSock) of
         {ok, Pid} ->
 	    ti_sup:start_child(),
             {ok, Pid};
