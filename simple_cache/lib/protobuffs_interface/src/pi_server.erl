@@ -7,7 +7,7 @@
 %%%      that TCP stream 
 %%% @end
 %%%-------------------------------------------------------------------
--module(ti_server).
+-module(pi_server).
 
 -behaviour(gen_server).
 
@@ -118,7 +118,7 @@ handle_info({tcp, Socket, RawData}, State) ->
     {noreply, State#state{request_count = RequestCount}};
 handle_info(timeout, #state{lsock = LSock} = State) ->
     {ok, _Sock} = gen_tcp:accept(LSock),
-    ti_sup:start_child(),
+    pi_sup:start_child(),
     {noreply, State}.
 
 %%--------------------------------------------------------------------
