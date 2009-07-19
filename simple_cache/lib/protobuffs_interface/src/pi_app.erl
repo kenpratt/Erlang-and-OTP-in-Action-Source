@@ -12,7 +12,7 @@
 %% Application callbacks
 -export([start/2, stop/1]).
 
--define(DEFAULT_PORT, 1055).
+-define(DEFAULT_PORT, 1156).
 
 %%%===================================================================
 %%% Application callbacks
@@ -36,12 +36,12 @@
 %%--------------------------------------------------------------------
 start(_StartType, _StartArgs) ->
     Port = 
-	case application:get_env(tcp_rpc, port) of
+	case application:get_env(protobuffs_interface, port) of
 	    {ok, Port_} -> Port_;
 	    undefined   -> ?DEFAULT_PORT
 	end,
 
-    {ok, LSock} = gen_tcp:listen(Port, [{active, true}]),
+    {ok, LSock} = gen_tcp:listen(Port, [{active, false}, {packet, raw}]),
 
     case pi_sup:start_link(LSock) of
         {ok, Pid} ->

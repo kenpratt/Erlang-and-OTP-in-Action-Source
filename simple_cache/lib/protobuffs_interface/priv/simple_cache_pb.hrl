@@ -1,3 +1,0 @@
--record(cachebobo, {response}).
--record(cacheresponse, {response}).
--record(cacherequest, {function, argument}).

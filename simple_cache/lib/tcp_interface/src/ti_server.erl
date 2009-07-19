@@ -22,7 +22,7 @@
 
 -define(SERVER, ?MODULE). 
 
--record(state, {lsock, request_count = 0}).
+-record(state, {lsock}).
 
 %%%===================================================================
 %%% API
@@ -70,8 +70,8 @@ init([LSock]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call(get_count, _From, State) ->
-    {reply, {ok, State#state.request_count}, State}.
+handle_call(Msg, _From, State) ->
+    {reply, {ok, Msg}, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -99,11 +99,11 @@ handle_cast(stop, State) ->
 handle_info({tcp, Socket, RawData}, State) ->
     try
 	Result = 
-	    case string:tokens(Data, "|") of
+	    case string:tokens(RawData, "|\r\n") of
 	        [Function, RawArgString] ->
 		    {ok, Toks, _Line} = erl_scan:string(RawArgString ++ ". "),
 		    {ok, Args} = erl_parse:parse_term(Toks),
-		    apply(simple_cache, Function, Args);
+		    apply(simple_cache, list_to_atom(Function), Args);
 	        _Error ->
 		    {error, bad_request}
 	end,
@@ -114,8 +114,7 @@ handle_info({tcp, Socket, RawData}, State) ->
 	        gen_tcp:send(Socket,
 		     lists:flatten(io_lib:fwrite("~p~n", [E])))
     end,
-    RequestCount = State#state.request_count + 1,
-    {noreply, State#state{request_count = RequestCount}};
+    {noreply, State};
 handle_info(timeout, #state{lsock = LSock} = State) ->
     {ok, _Sock} = gen_tcp:accept(LSock),
     ti_sup:start_child(),

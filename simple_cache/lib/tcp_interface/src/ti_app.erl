@@ -36,7 +36,7 @@
 %%--------------------------------------------------------------------
 start(_StartType, _StartArgs) ->
     Port = 
-	case application:get_env(tcp_rpc, port) of
+	case application:get_env(tcp_interface, port) of
 	    {ok, Port_} -> Port_;
 	    undefined   -> ?DEFAULT_PORT
 	end,
