@@ -4,7 +4,7 @@
    {vsn, "0.1.0"},
    {modules, [pi_app,
               pi_sup,
-	      pi_server]},
+	      pi_web_fsm]},
    {registered,[pi_sup]},
    {applications, [kernel, stdlib]},
    {mod, {pi_app,[]}},
