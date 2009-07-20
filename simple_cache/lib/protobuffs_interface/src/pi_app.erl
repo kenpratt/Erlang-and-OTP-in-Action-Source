@@ -41,7 +41,7 @@ start(_StartType, _StartArgs) ->
 	    undefined   -> ?DEFAULT_PORT
 	end,
 
-    {ok, LSock} = gen_tcp:listen(Port, [{active, false}, {packet, raw}]),
+    {ok, LSock} = gen_tcp:listen(Port, [binary, {active, false}, {packet, raw}, {reuseaddr, true}]),
 
     case pi_sup:start_link(LSock) of
         {ok, Pid} ->

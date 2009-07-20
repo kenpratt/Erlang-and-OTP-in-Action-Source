@@ -31,7 +31,7 @@
 
 -include("eunit.hrl").
 
--record(state, {lsock, socket, head = [], body = [], content_length}).
+-record(state, {lsock, socket, head = [<<>>], body = <<>>, content_length}).
 
 -define(SERVER, ?MODULE).
 
@@ -85,50 +85,47 @@ accept(timeout, #state{lsock = LSock} = State) ->
 build_packet_head(timeout, #state{socket = Socket, head = Head} = State) -> 
 	case gen_tcp:recv(Socket, 0) of
 	   {ok, Packet} -> 
-		io:format("~p~n", [Packet]),
-		HeadAug = lists:flatten(Head, Packet),
-		case check_for_end_of_head(Packet) of
-		    true ->
-			{ok, {_, CL}} = get_header(HeadAug, "Content-Length"),
-			NewState = State#state{head = HeadAug, content_length = list_to_integer(CL)},
-			{next_state, go_to_continue_or_build_packet_body(Head), NewState, 0};
-		    false ->
-			NewState = State#state{head = HeadAug},
+		NewHead = decode_header(Head, Packet),
+		case NewHead of
+		    [http_eoh|Headers] ->
+			CL = header_value_search('Content-Length', Headers, "0"),
+			NewState = State#state{head = lists:reverse(Headers), % put headers in recieved order
+					       content_length = list_to_integer(CL)},
+			{next_state, go_to_continue_or_build_packet_body(Headers), NewState, 0};
+		    _ ->
+			NewState = State#state{head = NewHead},
 			{next_state, build_packet_head, NewState, 0}
 		end;
 	    {error, closed} ->
 		{stop, normal, State}
 	end.
 
-go_to_continue_or_build_packet_body(Head) ->
-    try get_header(Head, "Expect") of
-	{ok, {_, "100-continue"}} -> continue
-    catch
-	_C:_E -> build_packet_body
-    end.
 
 continue(timeout, #state{socket = Socket} = State) ->
     gen_tcp:send(Socket, create_http_message(100)),
     {next_state, build_packet_body, State, 0}.
 
-build_packet_body(timeout,  State) -> 
+build_packet_body(timeout, State) -> 
     #state{socket         = Socket,
 	   body           = Body,
 	   content_length = ContentLength} = State,
 
-    case ContentLength - length(Body)of
+    case ContentLength - size(Body) of
 	0 ->
 	    {next_state, reply, State, 0};
 	ContentLeftOver when ContentLeftOver > 0 ->
 	    {ok, Packet} = gen_tcp:recv(Socket, ContentLeftOver),
-	    BodyAug      = lists:flatten(Body, Packet),
-	    NewState     = State#state{body = BodyAug},
+	    NewState = State#state{body = list_to_binary([Body, Packet])},
 	    {next_state, build_packet_body, NewState, 0}
     end.
-    
-reply(timeout, #state{socket = Socket} = State) -> 
-    gen_tcp:send(Socket, create_http_message(200)),
-    NewState = State#state{head = [], body = [], content_length = undefined},
+
+reply(timeout, State) -> 
+    #state{socket         = Socket,
+	   head           = Headers,
+	   body           = Body} = State,
+    Reply = handle_message(Headers, Body),
+    gen_tcp:send(Socket, Reply),
+    NewState = State#state{head = [<<>>], body = <<>>, content_length = undefined},
     {next_state, build_packet_head, NewState, 0}.
 
 %%--------------------------------------------------------------------
@@ -239,6 +236,19 @@ code_change(_OldVsn, StateName, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+handle_message([{http_request, 'GET', {abs_path, [$/|Key]}, _}|_Headers], _Body) ->
+    case simple_cache:lookup(Key) of
+	{ok, Value}        -> create_http_message(200, "text/html", Value);
+	{error, not_found} -> create_http_message(404)
+    end;
+handle_message([{http_request,'PUT',{abs_path, [$/|Key]},_}|_Headers], Body) ->
+    simple_cache:insert(Key, Body),
+    create_http_message(200);
+handle_message([{http_request, 'DELETE', {abs_path, [$/|Key]}, _}|_Headers], _Body) ->
+    simple_cache:delete(Key),
+    create_http_message(200).
+
 create_http_message(Code) ->
     create_http_message(Code, "text/html", "").
 
@@ -252,31 +262,38 @@ create_http_message(Code, ContentType, Body) ->
      Body].
 %application/x-protobuf  ) ->
 
-check_for_end_of_head(Packet) ->
-    [A,B,C,D|_] = lists:reverse(Packet),
-    [A,B,C,D] == "\n\r\n\r".
+decode_header([Unparsed|T], Packet) ->
+    decode_header([list_to_binary([Unparsed, Packet])|T]).
 
-get_header([Start|Packet], [Start|Rest] = Header) ->
-    case try_fetch_header(Packet, Rest) of
-	no_match -> get_header(Packet, Header);
-	Value    -> {ok, {Header, Value}}
-    end;
-get_header([_|Packet], Header) ->
-    get_header(Packet, Header);
-get_header([], _Header) ->
-    throw(header_not_found).
-	    
-try_fetch_header([H|TP], [H|TH]) ->
-    try_fetch_header(TP, TH);
-try_fetch_header(Packet, []) ->
-    [$:,$ |Value] = Packet,
-    strip_value(Value);
-try_fetch_header(_, _) ->
-    no_match.
+decode_header([_Unparsed] = Headers) ->
+    decode_packet(http, Headers);
+decode_header(Headers) ->
+    decode_packet(httph, Headers).
 
-strip_value([$\r|_]) -> [];
-strip_value([H|T])   -> [H|strip_value(T)].
-    
+decode_packet(Type, [Unparsed|Parsed] = Headers) ->
+    case erlang:decode_packet(Type, Unparsed, []) of
+	{ok, http_eoh, <<>>} ->
+	    [http_eoh|Parsed];
+	{more, _} ->
+	    Headers;
+	{ok, MoreParsed, Rest} ->
+	    decode_header([Rest, MoreParsed|Parsed]);
+	{error, Reason} ->
+	    throw({bad_header, Reason})
+    end.
+
+go_to_continue_or_build_packet_body(Headers) ->
+    case lists:keymember("100-continue", 5, Headers) of
+	true  -> continue;
+	false -> build_packet_body
+    end.
+
+header_value_search(Key, List, Default) ->
+    case lists:keysearch(Key, 3, List) of
+	{value, {_, _, _, _, CL}} -> CL;
+	false                     -> Default
+    end.
+
 %% @doc Given a number of a standard HTTP response code, return
 %% a binary (string) of the number and name.
 %%
@@ -343,11 +360,3 @@ code_to_binary(507) -> <<"507 Insufficient Storage">>;
 code_to_binary(509) -> <<"509 Bandwidth Limit Exceeded">>;
 code_to_binary(510) -> <<"510 Not Extended">>;
 code_to_binary(Code) -> Code.
-
-%%%===================================================================
-%%% Test functions
-%%%===================================================================
-get_header_test() ->
-    L = get_header("\r\nContent-Length: 32\r\nExpect: 100-continue\r\n\r\n",
-		   "Content-Length"),
-    ?assertMatch({ok, {"Content-Length", "32"}}, L).

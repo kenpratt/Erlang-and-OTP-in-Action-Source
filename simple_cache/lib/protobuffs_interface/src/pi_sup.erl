@@ -70,8 +70,8 @@ init([LSock]) ->
     Shutdown = brutal_kill,
     Type = worker,
     
-    AChild = {pi_server, {pi_server, start_link, [LSock]},
-	      Restart, Shutdown, Type, [pi_server]},
+    AChild = {pi_web_fsm, {pi_web_fsm, start_link, [LSock]},
+	      Restart, Shutdown, Type, [pi_web_fsm]},
     
     {ok, {SupFlags, [AChild]}}.
 
