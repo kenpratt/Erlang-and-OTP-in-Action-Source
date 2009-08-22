@@ -18,15 +18,19 @@
 	 init/1,
 	 state_name/3, 
 	 handle_event/3, 
-	 accept/2, 
-	 continue/2, 
-	 build_packet_head/2, 
-	 build_packet_body/2,
-	 reply/2,
 	 handle_sync_event/4, 
 	 handle_info/3, 
 	 terminate/3, 
 	 code_change/4
+	]).
+
+%% States
+-export([
+	 accept/2, 
+	 continue/2, 
+	 build_packet_head/2, 
+	 build_packet_body/2,
+	 reply/2
 	]).
 
 -include("eunit.hrl").

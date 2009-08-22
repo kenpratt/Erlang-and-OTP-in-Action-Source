@@ -1,4 +1,2 @@
--record(cacheresponse, {payload, error}).
--record(cachedelete, {key}).
--record(cachelookup, {key}).
--record(cacheinsert, {key, value}).
+-record(packagedata, {type, name, version, architecture, erts_vsn, checksum}).
+-record(packagetype, {}).
