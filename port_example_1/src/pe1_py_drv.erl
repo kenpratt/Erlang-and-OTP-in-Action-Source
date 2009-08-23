@@ -98,7 +98,7 @@ handle_cast({msg, Msg}, State = #state{port=Port}) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info({Port, {data, Data}}, State = #state{port=Port}) ->
+handle_info({Port, {data, {_, Data}}}, State = #state{port=Port}) ->
     io:format("~p~n", [Data]),
     {noreply, State};
 handle_info({Port, {exit_status, Status}}, #state{port=Port})

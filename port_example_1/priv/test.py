@@ -18,6 +18,7 @@ def main():
             return 1
 
         sys.stdout.write(line)
+ 	sys.stdout.write("\n")
         sys.stdout.flush()
 
 if __name__ == "__main__":
