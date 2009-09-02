@@ -129,8 +129,7 @@ reply(timeout, State) ->
 	   body           = Body} = State,
     Reply = handle_message(Headers, Body),
     gen_tcp:send(Socket, Reply),
-    NewState = State#state{head = [<<>>], body = <<>>, content_length = undefined},
-    {next_state, build_packet_head, NewState, 0}.
+    {stop, normal, State}.
 
 %%--------------------------------------------------------------------
 %% @private
