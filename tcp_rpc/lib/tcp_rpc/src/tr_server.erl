@@ -127,22 +127,16 @@ handle_cast(stop, State) ->
 handle_info({tcp, Socket, RawData}, State) ->
     RequestCount = State#state.request_count,
     try
-	Data = string:strip(
-		 string:strip(RawData, right, $\n),
-		 right, $\r),
-	[M, F|RawArgString] = string:tokens(Data, ":()."),
-	Module      = list_to_atom(M),
-	Function    = list_to_atom(F),
-	Result = 
-	case RawArgString of
-	    [ArgString] ->
-		{ok, Toks, _Line} = erl_scan:string("[" ++ ArgString ++ "]. ", 1),
-		{ok, Args} = erl_parse:parse_term(Toks),
-		io:format("~p ~p ~p", [Module, Function, Args]),
-		apply(Module, Function, Args);
-	    [] ->
-		apply(Module, Function)
-	end,
+	MFA = string:strip(
+		string:strip(RawData, right, $\n),
+		right, $\r),
+	
+	{match, [M, F, A]} =
+	    re:run(MFA,
+	           "(.*):(.*)\s*\\((.*)\s*\\)\s*.\s*$",
+                   [{capture, [1,2,3], list}, ungreedy]),
+
+	Result = apply(list_to_atom(M), list_to_atom(F), args_to_terms(A)),
 	gen_tcp:send(Socket,
 		     lists:flatten(io_lib:fwrite("~p~n", [Result])))
     catch 
@@ -183,4 +177,9 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
+args_to_terms([]) ->
+    [];
+args_to_terms(RawArgs) ->
+    {ok, Toks, _Line} = erl_scan:string("[" ++ RawArgs ++ "]. ", 1),
+    {ok, Args} = erl_parse:parse_term(Toks),
+    Args.
