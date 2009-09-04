@@ -127,22 +127,17 @@ handle_cast(stop, State) ->
 handle_info({tcp, Socket, RawData}, State) ->
     RequestCount = State#state.request_count,
     try
-	MFA = string:strip(
-		string:strip(RawData, right, $\n),
-		right, $\r),
-	
+	MFA = re:replace(RawData, "\r\n$", "", [{return, list}]), 
 	{match, [M, F, A]} =
 	    re:run(MFA,
 	           "(.*):(.*)\s*\\((.*)\s*\\)\s*.\s*$",
                    [{capture, [1,2,3], list}, ungreedy]),
 
 	Result = apply(list_to_atom(M), list_to_atom(F), args_to_terms(A)),
-	gen_tcp:send(Socket,
-		     lists:flatten(io_lib:fwrite("~p~n", [Result])))
+	gen_tcp:send(Socket, io_lib:fwrite("~p~n", [Result]))
     catch 
 	_C:E ->
-	    gen_tcp:send(Socket,
-			 lists:flatten(io_lib:fwrite("~p~n", [E])))
+	    gen_tcp:send(Socket, io_lib:fwrite("~p~n", [E]))
     end,
     {noreply, State#state{request_count = RequestCount + 1}};
 handle_info(timeout, #state{lsock = LSock} = State) ->
