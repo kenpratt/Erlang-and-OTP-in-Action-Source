@@ -1,33 +1,55 @@
 package org.erlware.simple_cache;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.NavigableMap;
 
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 
+/**
+ * This class provides a direct get/put interface to our HBase tables
+ * 
+ * @author Eric Merritt
+ *
+ */
 public class HBaseConnector {
+	private HTable _table;
+	
+	public HBaseConnector() throws IOException {
+		super();
 
-	public static Map retrievePost(String postId) throws IOException {
-		HTable table = new HTable(new HBaseConfiguration(), "tester");
-		Map post = new HashMap();
-
-		Get g = new Get(postId.getBytes());
-		Result rs = table
-		.get(g);
-		post = rs.getMap();
-		
-		System.out.println(post.get("value:binary"));
-		
-		
-		return post;
+		_table = new HTable(new HBaseConfiguration(), "cache");
 	}
 
-	public static void main(String[] args) throws IOException {
-		Map blogpost = HBaseConnector.retrievePost("some/file");
-		System.out.println(blogpost);
+	/**
+	 * Get a cache object from the table, by its filename.
+	 * 
+	 * @param fileName The filename/object name of the cached object
+	 * @return The value of that object or null if it doesn't exist
+	 * @throws IOException
+	 */
+	public byte[] get(String fileName) throws IOException {
+		Result result = _table.get(new Get(fileName.getBytes()));
+		NavigableMap<byte[], NavigableMap<byte[], byte[]>> res = result.getNoVersionMap();
+		
+		return res.get("value".getBytes()).get("".getBytes());
 	}
+	
+	/**
+	 * Put a new cached object into the table.
+	 * 
+	 * @param filename The name of the object
+	 * @param value The binary value of the object
+	 * @throws IOException
+	 */
+	public void put(String filename, byte[] value) throws IOException {
+		Put put = new Put(filename.getBytes());
+		put.add("value".getBytes(), "".getBytes(), value);
+	
+		_table.put(put);
+	}
+
 }
