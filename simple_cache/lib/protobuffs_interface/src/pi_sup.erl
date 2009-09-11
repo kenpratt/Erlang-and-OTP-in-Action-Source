@@ -66,14 +66,14 @@ init([LSock]) ->
     
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
     
-    Restart = temporary,
+    Restart  = temporary,
     Shutdown = brutal_kill,
-    Type = worker,
+    Type     = worker,
     
-    AChild = {pi_web_fsm, {pi_web_fsm, start_link, [LSock]},
-	      Restart, Shutdown, Type, [pi_web_fsm]},
+    WebSocket = {pi_web_socket, {pi_web_socket, start_link, [LSock]},
+		 Restart, Shutdown, Type, [pi_web_socket]},
     
-    {ok, {SupFlags, [AChild]}}.
+    {ok, {SupFlags, [WebSocket]}}.
 
 %%%===================================================================
 %%% Internal functions

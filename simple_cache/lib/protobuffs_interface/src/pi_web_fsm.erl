@@ -2,7 +2,12 @@
 %%% @author Martin Logan <martinjlogan@Macintosh.local>
 %%% @copyright (C) 2009, Martin Logan
 %%% @doc
-%%%  This is a skeleton simple little very basic webserver
+%%%  This is a skeleton simple little very basic webserver.
+%%%  - insert into the cache is done with PUT
+%%%    example: curl -T <filename> http://localhost:1156/key 
+%%%  - delete is done with DELETE
+%%%  - lookup is done with a GET
+%%%  and that is it. 
 %%% @end
 %%% Created : 18 Jul 2009 by Martin Logan <martinjlogan@Macintosh.local>
 %%%-------------------------------------------------------------------
@@ -11,7 +16,7 @@
 -behaviour(gen_fsm).
 
 %% API
--export([start_link/1]).
+-export([start_link/1, packet/2]).
 
 %% gen_fsm callbacks
 -export([
@@ -26,8 +31,6 @@
 
 %% States
 -export([
-	 accept/2, 
-	 continue/2, 
 	 build_packet_head/2, 
 	 build_packet_body/2,
 	 reply/2
@@ -35,7 +38,7 @@
 
 -include("eunit.hrl").
 
--record(state, {lsock, socket, head = [<<>>], body = <<>>, content_length}).
+-record(state, {socket_manager, head = [<<>>], body = <<>>, content_length}).
 
 -define(SERVER, ?MODULE).
 
@@ -50,11 +53,20 @@
 %% initialize. To ensure a synchronized start-up procedure, this
 %% function does not return until Module:init/1 has returned.
 %%
-%% @spec start_link(LSock) -> {ok, Pid} | ignore | {error, Error}
+%% @spec start_link(SocketManager::pid()) -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link(LSock) ->
-    gen_fsm:start_link(?MODULE, [LSock], []).
+start_link(SocketManager) ->
+    gen_fsm:start_link(?MODULE, [SocketManager], []).
+
+%%--------------------------------------------------------------------
+%% @doc create a new packet event of data has been received
+%%
+%% @spec packet(FSMPid, Packet) -> ok
+%% @end
+%%--------------------------------------------------------------------
+packet(FSMPid, Packet) ->
+    gen_fsm:send_event(FSMPid, {packet, Packet}).
 
 %%%===================================================================
 %%% gen_fsm callbacks
@@ -73,62 +85,52 @@ start_link(LSock) ->
 %%                     {stop, StopReason}
 %% @end
 %%--------------------------------------------------------------------
-init([LSock]) ->
-    {ok, accept, #state{lsock = LSock}, 0}.
+init([SocketManager]) ->
+    error_logger:info_msg("pi_web_fsm:init/1~n"),
+    {ok, build_packet_head, #state{socket_manager = SocketManager}}.
 
 %%% All states below here - they are accept, build_packet_head,
 %%% continue, build packet_body and reply
 
-accept(timeout, #state{lsock = LSock} = State) ->
-    error_logger:info_msg("waiting to accept an incoming connection~n"),
-    {ok, Socket} = gen_tcp:accept(LSock),
-    error_logger:info_msg("connection received on socket ~p~n", [Socket]),
-    pi_sup:start_child(),
-    {next_state, build_packet_head, State#state{socket = Socket}, 0}.
-
-build_packet_head(timeout, #state{socket = Socket, head = Head} = State) -> 
-	case gen_tcp:recv(Socket, 0) of
-	   {ok, Packet} -> 
-		NewHead = decode_header(Head, Packet),
-		case NewHead of
-		    [http_eoh|Headers] ->
-			CL = header_value_search('Content-Length', Headers, "0"),
-			NewState = State#state{head = lists:reverse(Headers), % put headers in recieved order
-					       content_length = list_to_integer(CL)},
-			{next_state, go_to_continue_or_build_packet_body(Headers), NewState, 0};
-		    _ ->
-			NewState = State#state{head = NewHead},
-			{next_state, build_packet_head, NewState, 0}
-		end;
-	    {error, closed} ->
-		{stop, normal, State}
-	end.
+build_packet_head({packet, Packet}, #state{socket_manager = SM, head = Head} = State) -> 
+    NewHead = decode_header(Head, Packet),
+    case NewHead of
+	[http_eoh|Headers] ->
+	    CL = list_to_integer(header_value_search('Content-Length', Headers, "0")),
+	    NewState = State#state{head = lists:reverse(Headers), % put headers in recieved order
+				   content_length = CL},
+	    send_continue(SM, Headers),
+	    case CL of
+		0 ->
+		    {next_state, reply, NewState, 0};
+		CL ->
+		    {next_state, build_packet_body, NewState}
+	    end;
+	_ ->
+	    NewState = State#state{head = NewHead},
+	    {next_state, build_packet_head, NewState}
+    end.
 
 
-continue(timeout, #state{socket = Socket} = State) ->
-    gen_tcp:send(Socket, create_http_message(100)),
-    {next_state, build_packet_body, State, 0}.
-
-build_packet_body(timeout, State) -> 
-    #state{socket         = Socket,
-	   body           = Body,
+build_packet_body({packet, Packet}, State) -> 
+    #state{body           = Body,
 	   content_length = ContentLength} = State,
+    NewBody  = list_to_binary([Body, Packet]),
+    NewState = State#state{body = NewBody},
 
-    case ContentLength - size(Body) of
+    case ContentLength - byte_size(NewBody) of
 	0 ->
-	    {next_state, reply, State, 0};
+	    {next_state, reply, NewState, 0};
 	ContentLeftOver when ContentLeftOver > 0 ->
-	    {ok, Packet} = gen_tcp:recv(Socket, ContentLeftOver),
-	    NewState = State#state{body = list_to_binary([Body, Packet])},
-	    {next_state, build_packet_body, NewState, 0}
+	    {next_state, build_packet_body, NewState}
     end.
 
 reply(timeout, State) -> 
-    #state{socket         = Socket,
+    #state{socket_manager = SocketManager,
 	   head           = Headers,
 	   body           = Body} = State,
     Reply = handle_message(Headers, Body),
-    gen_tcp:send(Socket, Reply),
+    pi_web_socket:send(SocketManager, Reply),
     {stop, normal, State}.
 
 %%--------------------------------------------------------------------
@@ -216,13 +218,11 @@ handle_info(_Info, StateName, State) ->
 %% @spec terminate(Reason, StateName, State) -> void()
 %% @end
 %%--------------------------------------------------------------------
-terminate(normal, _StateName, #state{socket = Socket}) ->
-    gen_tcp:close(Socket),
+terminate(normal, _StateName, _State) ->
     ok;
-terminate(_Reason, _StateName, #state{socket = Socket}) ->
+terminate(_Reason, _StateName, #state{socket_manager = SocketManager}) ->
     Err = create_http_message(500, "text/html", "500 Internal Server Error"),
-    gen_tcp:send(Socket, Err),
-    gen_tcp:close(Socket),
+    pi_web_socket:send(SocketManager, Err),
     ok.
 %%--------------------------------------------------------------------
 %% @private
@@ -285,11 +285,6 @@ decode_packet(Type, [Unparsed|Parsed] = Headers) ->
 	    throw({bad_header, Reason})
     end.
 
-go_to_continue_or_build_packet_body(Headers) ->
-    case lists:keymember("100-continue", 5, Headers) of
-	true  -> continue;
-	false -> build_packet_body
-    end.
 
 header_value_search(Key, List, Default) ->
     case lists:keysearch(Key, 3, List) of
@@ -297,6 +292,16 @@ header_value_search(Key, List, Default) ->
 	false                     -> Default
     end.
 
+%% @private
+%% @doc send a 100 continue packet if the client expects it
+%% @end
+send_continue(SocketManager, Headers) ->
+    case lists:keymember("100-continue", 5, Headers) of
+	true  -> pi_web_socket:send(SocketManager, create_http_message(100));
+	false -> ok
+    end.
+
+%% @private
 %% @doc Given a number of a standard HTTP response code, return
 %% a binary (string) of the number and name.
 %%
