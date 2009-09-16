@@ -35,7 +35,6 @@
 start_link() ->
     supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
-
 %%--------------------------------------------------------------------
 %% @doc
 %% Start a child process, an sc_element.
