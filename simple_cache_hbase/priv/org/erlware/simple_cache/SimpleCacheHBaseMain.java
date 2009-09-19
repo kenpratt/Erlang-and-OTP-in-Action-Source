@@ -9,6 +9,7 @@ import com.ericsson.otp.erlang.OtpErlangBinary;
 import com.ericsson.otp.erlang.OtpErlangList;
 import com.ericsson.otp.erlang.OtpErlangObject;
 import com.ericsson.otp.erlang.OtpErlangPid;
+import com.ericsson.otp.erlang.OtpErlangRef;
 import com.ericsson.otp.erlang.OtpErlangTuple;
 import com.ericsson.otp.erlang.OtpMbox;
 import com.ericsson.otp.erlang.OtpNode;
@@ -26,13 +27,13 @@ public class SimpleCacheHBaseMain {
 	private OtpNode _node;
 	private OtpMbox _mbox;
 
-	public SimpleCacheHBaseMain(String nodeName, String serverName)
+	public SimpleCacheHBaseMain(String nodeName, String cookie, String serverName)
 			throws IOException {
 		super();
 
 		_conn = new HBaseConnector();
 		_exe = Executors.newFixedThreadPool(10);
-		_node = new OtpNode(nodeName);
+		_node = new OtpNode(nodeName, cookie);
 		_mbox = _node.createMbox();
 		_mbox.registerName(serverName);
 	}
@@ -43,21 +44,17 @@ public class SimpleCacheHBaseMain {
 	 */
 	public void process() {
 
-		OtpErlangObject o;
-		OtpErlangTuple msg;
-		OtpErlangPid from;
-		String action;
-		String key;
 		byte[] data;
 
 		while (true) {
 			try {
-				o = _mbox.receive();
+				OtpErlangObject o = _mbox.receive();
 				if (o instanceof OtpErlangTuple) {
-					msg = (OtpErlangTuple) o;
-					from = (OtpErlangPid) msg.elementAt(0);
-					action = ((OtpErlangAtom) msg.elementAt(1)).toString();
-					key = ((OtpErlangList) msg.elementAt(2)).toString();
+					OtpErlangTuple msg = (OtpErlangTuple) o;
+					OtpErlangPid from = (OtpErlangPid) msg.elementAt(0);
+					OtpErlangRef ref = (OtpErlangRef) msg.elementAt(1);
+					String action = ((OtpErlangAtom) msg.elementAt(2)).toString();
+					String key = ((OtpErlangList) msg.elementAt(3)).toString();
 					
 					HBaseTask task = null;
 					if (msg.arity() == 3) {
@@ -65,22 +62,23 @@ public class SimpleCacheHBaseMain {
 								.binaryValue();
 
 						task = new HBaseTask(_mbox, _conn,
-								 from, action, key, data);
+								 from, ref, action, key, data);
 					} else if (msg.arity() == 2) {
 						task = new HBaseTask(_mbox, _conn,
-								 from, action, key, null);
+								 from, ref, action, key, null);
 					} else {
 						OtpErlangTuple res = new OtpErlangTuple(new OtpErlangObject[] {
 								new OtpErlangAtom("error"), new OtpErlangAtom("invalid_request") });
+						
 						_mbox.send(from, res);
 						return;
 					}
 					
 					// Submit the task to the executor. Asynchronous processing
 					_exe.submit(task);
-				}
+				} 
 			} catch (Exception e) {
-				System.out.println("" + e);
+				System.out.println(e.getMessage());
 			}
 		}
 
@@ -88,16 +86,20 @@ public class SimpleCacheHBaseMain {
 
 	private static void usage() {
 		System.out
-				.println("You must provide the node name and the server name");
+				.println("You must provide the node name, node cookie and the server name");
 	}
 
 	public static void main(String[] args) throws Exception {
-		if (args.length < 2) {
+		if (args.length < 3) {
 			usage();
 			return;
 		}
 
-		SimpleCacheHBaseMain main = new SimpleCacheHBaseMain(args[0], args[1]);
+		String nodeName = args[0];
+		String cookie = args[1];
+		String serverName = args[2];
+		
+		SimpleCacheHBaseMain main = new SimpleCacheHBaseMain(nodeName, cookie, serverName);
 		main.process();
 
 	}

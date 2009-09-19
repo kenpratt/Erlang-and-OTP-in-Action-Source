@@ -7,6 +7,7 @@ import com.ericsson.otp.erlang.OtpErlangBinary;
 import com.ericsson.otp.erlang.OtpErlangList;
 import com.ericsson.otp.erlang.OtpErlangObject;
 import com.ericsson.otp.erlang.OtpErlangPid;
+import com.ericsson.otp.erlang.OtpErlangRef;
 import com.ericsson.otp.erlang.OtpErlangTuple;
 import com.ericsson.otp.erlang.OtpMbox;
 
@@ -21,6 +22,7 @@ public class HBaseTask implements Runnable {
 	private HBaseConnector _conn;
 	private OtpMbox _mbox;
 	private OtpErlangPid _from;
+	private OtpErlangRef _ref;
 	private String _action;
 	private String _key;
 	private byte[] _value;
@@ -35,11 +37,12 @@ public class HBaseTask implements Runnable {
 	 * @param key The key of the request
 	 * @param value The value if it exists (may be null if get is the action)
 	 */
-	public HBaseTask(OtpMbox mbox, HBaseConnector conn, OtpErlangPid from,
+	public HBaseTask(OtpMbox mbox, HBaseConnector conn, OtpErlangPid from, OtpErlangRef ref,
 			String action, String key, byte[] value) {
 		super();
 
 		_mbox = mbox;
+		_ref = ref;
 		_conn = conn;
 		_from = from;
 		_action = action;
@@ -58,7 +61,7 @@ public class HBaseTask implements Runnable {
 		byte[] data = _conn.get(_key);
 
 		OtpErlangTuple res = new OtpErlangTuple(new OtpErlangObject[] {
-				new OtpErlangAtom("get_result"), new OtpErlangBinary(data) });
+				new OtpErlangAtom("get_result"), _ref, new OtpErlangBinary(data) });
 
 		_mbox.send(_from, res);
 
@@ -74,7 +77,7 @@ public class HBaseTask implements Runnable {
 		_conn.put(_key, _value);
 
 		OtpErlangTuple res = new OtpErlangTuple(new OtpErlangObject[] {
-				new OtpErlangAtom("put_result"), new OtpErlangAtom("ok") });
+				new OtpErlangAtom("put_result"), _ref, new OtpErlangAtom("ok") });
 
 		_mbox.send(_from, res);
 
@@ -97,7 +100,7 @@ public class HBaseTask implements Runnable {
 			
 			// Let the caller know that we had a problem
 			OtpErlangTuple res = new OtpErlangTuple(new OtpErlangObject[] {
-					new OtpErlangAtom("error"), new OtpErlangList(ioe.getMessage()) });
+					new OtpErlangAtom("error"), _ref, new OtpErlangList(ioe.getMessage()) });
 			_mbox.send(_from, res);
 		}
 	}
