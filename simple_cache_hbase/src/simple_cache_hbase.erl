@@ -9,7 +9,7 @@
 -module(simple_cache_hbase).
 
 %% API
--export([]).
+-export([put, get]).
 
 %%%===================================================================
 %%% API
@@ -36,6 +36,16 @@ get(Node, Key) ->
     receive
 	{get_result, Ref, Value} ->
 	    {ok, Value}
+    after 1000 ->
+	    error
+    end.
+
+delete(Node, Key) ->
+    Ref = make_ref(),
+    {hbase_server, Node} ! {delete, self(), Ref, Key},
+    receive
+	{delete_result, Ref, ok} ->
+	    ok
     after 1000 ->
 	    error
     end.

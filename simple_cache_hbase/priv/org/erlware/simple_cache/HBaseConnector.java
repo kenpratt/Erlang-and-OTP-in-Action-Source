@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.NavigableMap;
 
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -50,6 +51,17 @@ public class HBaseConnector {
 		put.add("value".getBytes(), "".getBytes(), value);
 	
 		_table.put(put);
+	}
+	
+	/**
+	 * Delete a key from the system
+	 * @param filename The name of the file to delete.
+	 * @throws IOException
+	 */
+	public void delete(String filename) throws IOException {
+		Delete del = new Delete(filename.getBytes());
+	
+		_table.delete(del);
 	}
 
 }
