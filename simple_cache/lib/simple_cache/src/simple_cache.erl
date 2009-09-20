@@ -15,6 +15,8 @@
 	 lookup/1
 	]).
 
+-define(NODE, "simple_cache_hbase").
+
 %%%===================================================================
 %%% API
 %%%===================================================================
@@ -31,7 +33,8 @@ insert(Key, Value) ->
     case sc_store:lookup(Key) of
 	{ok, Pid} ->
 	    sc_event:replace(Key, Value),
-	    sc_element:replace(Pid, Value);
+	    sc_element:replace(Pid, Value),
+	    simple_cache_hbase:put(?NODE, Key, Value);
 	{error, _Reason} ->
 	    {ok, Pid} = sc_element:create(Value),
 	    sc_store:insert(Key, Pid),
@@ -51,6 +54,14 @@ lookup(Key) ->
     case sc_store:lookup(Key) of
 	{ok, Pid} ->
 	    sc_element:fetch(Pid);
+	{error, not_found} ->
+	    case simple_cache_hbase:get(?NODE, Key) of
+		{ok, Value} ->
+		    insert(Key, Value),
+		    Value;
+		_ ->
+		    {error, not_found}
+	    end;
 	{error, Reason} ->
 	    {error, Reason}
     end.
@@ -66,7 +77,8 @@ delete(Key) ->
     sc_event:delete(Key),
     case sc_store:lookup(Key) of
 	{ok, Pid} ->
-	    sc_element:delete(Pid);
+	    sc_element:delete(Pid),
+	    simple_cache_hbase:delete(?NODE, Key);
 	{error, _Reason} ->
 	    ok
     end.
