@@ -37,6 +37,8 @@
 %% Starts the server
 %%
 %% @spec start_link(Port::integer()) -> {ok, Pid} 
+%% where
+%%  Pid = pid()
 %% @end
 %%--------------------------------------------------------------------
 start_link(Port) ->
