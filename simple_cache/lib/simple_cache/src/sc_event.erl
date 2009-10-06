@@ -10,7 +10,6 @@
 
 %% API
 -export([start_link/0,
-         event_name/0,
          lookup/1,
          create/2,
 	 replace/2,
@@ -35,21 +34,12 @@ start_link() ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%%  Get the event name from the system.
-%% @spec () -> EventName
-%% @end
-%%--------------------------------------------------------------------
-event_name() ->
-    ?SERVER.
-
-%%--------------------------------------------------------------------
-%% @doc
 %%  Event fired when a new element is inserted
 %% @spec (Key, Value) -> ok
 %% @end
 %%--------------------------------------------------------------------
 create(Key, Value) ->
-    gen_event:notify(?SERVER, {create, Key, Value}).
+    gen_event:notify(?SERVER, {create, {Key, Value}}).
 
 
 %%--------------------------------------------------------------------
@@ -77,7 +67,7 @@ delete(Key) ->
 %% @end
 %%--------------------------------------------------------------------
 replace(Key, Value) ->
-    gen_event:notify(?SERVER, {replace, Key, Value}).
+    gen_event:notify(?SERVER, {replace, {Key, Value}}).
 
 %%--------------------------------------------------------------------
 %% @doc

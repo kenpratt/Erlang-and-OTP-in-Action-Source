@@ -66,7 +66,7 @@ init(_) ->
 %% each installed event handler to handle the event.
 %% @end
 %%--------------------------------------------------------------------
-handle_event({create, Key, Value}, State) ->
+handle_event({create, {Key, Value}}, State) ->
     error_logger:info_msg("create(~w, ~w)", [Key, Value]),
     {ok, State};
 handle_event({lookup, Key}, State) ->
@@ -75,7 +75,7 @@ handle_event({lookup, Key}, State) ->
 handle_event({delete, Key}, State) ->
     error_logger:info_msg("delete(~w)", [Key]),
     {ok, State};
-handle_event({replace, Key, Value}, State) ->
+handle_event({replace, {Key, Value}}, State) ->
     error_logger:info_msg("replace(~w, ~w)", [Key, Value]),
     {ok, State}.
 
