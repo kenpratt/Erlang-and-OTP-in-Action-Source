@@ -15,8 +15,8 @@
          create/2,
 	 replace/2,
          delete/1,
-         add_handler/2,
-         add_sup_handler/2]).
+         delete_handler/2,
+         add_handler/2]).
 
 -define(SERVER, ?MODULE).
 
@@ -90,9 +90,9 @@ add_handler(Handler, Args) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Add a handler for this event system.
+%% Delete a handler for this event system.
 %% @spec (Handler, Args) -> ok
 %% @end
 %%--------------------------------------------------------------------
-add_sup_handler(Handler, Args) ->
-    gen_event:add_sup_handler(?SERVER, Handler, Args).
+delete_handler(Handler, Args) ->
+    gen_event:delete_handler(?SERVER, Handler, Args).
