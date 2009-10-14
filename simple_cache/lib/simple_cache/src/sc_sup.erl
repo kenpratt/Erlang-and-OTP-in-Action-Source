@@ -13,7 +13,7 @@
 %% API
 -export([
 	 start_link/0,
-	 start_child/1
+	 start_child/2
 	]).
 
 %% Supervisor callbacks
@@ -39,11 +39,11 @@ start_link() ->
 %% @doc
 %% Start a child process, an sc_element.
 %%
-%% @spec start_child(Value) -> void()
+%% @spec start_child(Value, LeaseTime) -> void()
 %% @end
 %%--------------------------------------------------------------------
-start_child(Value) ->
-    supervisor:start_child(?SERVER, [Value]).
+start_child(Value, LeaseTime) ->
+    supervisor:start_child(?SERVER, [Value, LeaseTime]).
 
 %%%===================================================================
 %%% Supervisor callbacks

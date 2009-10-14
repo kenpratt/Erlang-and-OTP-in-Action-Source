@@ -12,8 +12,9 @@
 
 %% API
 -export([
-	 start_link/1,
+	 start_link/2,
 	 create/1,
+	 create/2,
 	 fetch/1,
 	 replace/2,
 	 delete/1
@@ -24,8 +25,9 @@
 	 terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE). 
+-define(DEFAULT_LEASE_TIME, infinity). 
 
--record(state, {value}).
+-record(state, {value, lease_time}).
 
 %%%===================================================================
 %%% API
@@ -35,21 +37,31 @@
 %% @doc
 %% Starts the server
 %%
-%% @spec start_link(Value) -> {ok, Pid} | ignore | {error, Error}
+%% @spec start_link(Value, LeaseTime) -> {ok, Pid} | ignore | {error, Error}
+%% where
+%%  LeaseTime = integer() | infinity
 %% @end
 %%--------------------------------------------------------------------
-start_link(Value) ->
-    gen_server:start_link(?MODULE, [Value], []).
+start_link(Value, LeaseTime) ->
+    gen_server:start_link(?MODULE, [Value, LeaseTime], []).
+
 
 %%--------------------------------------------------------------------
 %% @doc
 %%  Create an element in the cache
 %%
-%% @spec create(Value) -> void()
+%% @spec create(Value, LeaseTime) -> void()
+%% where
+%%  LeaseTime = integer() | infinity
 %% @end
 %%--------------------------------------------------------------------
+create(Value, LeaseTime) ->
+    sc_sup:start_child(Value, LeaseTime).
+
+%% @spec create(Value) -> void()
+%% @equiv create(Value, DefaultLeaseTime)
 create(Value) ->
-    sc_sup:start_child(Value).
+    create(Value, ?DEFAULT_LEASE_TIME).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -96,8 +108,8 @@ delete(Pid) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([Value]) ->
-    {ok, #state{value = Value}}.
+init([Value, LeaseTime]) ->
+    {ok, #state{value = Value, lease_time = LeaseTime}, LeaseTime}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -113,8 +125,8 @@ init([Value]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call(fetch, _From, #state{value = Value} = State) ->
-    {reply, {ok, Value}, State}.
+handle_call(fetch, _From, #state{value = Value, lease_time = LeaseTime} = State) ->
+    {reply, {ok, Value}, State, LeaseTime}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -127,7 +139,7 @@ handle_call(fetch, _From, #state{value = Value} = State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_cast({replace, Value}, State) ->
-    {noreply, State#state{value = Value}};
+    {noreply, State#state{value = Value}, State#state.lease_time};
 handle_cast(delete, State) ->
     {stop, normal, State}.
 
@@ -141,8 +153,8 @@ handle_cast(delete, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(_Info, State) ->
-    {noreply, State}.
+handle_info(timeout, State) ->
+    {stop, normal, State}.
 
 %%--------------------------------------------------------------------
 %% @private
