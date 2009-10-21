@@ -25,9 +25,9 @@
 	 terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE). 
--define(DEFAULT_LEASE_TIME, infinity). 
+-define(DEFAULT_LEASE_TIME, 60 * 60 * 24). % 1 day default in seconds 
 
--record(state, {value, lease_time}).
+-record(state, {value, lease_time, start_time}).
 
 %%%===================================================================
 %%% API
@@ -67,7 +67,7 @@ create(Value) ->
 %% @doc
 %% Fetch an element from the cache.
 %%
-%% @spec fetch(Pid) -> {ok, Value} | {error, Reason}
+%% @spec fetch(Pid) -> {ok, Value}  
 %% @end
 %%--------------------------------------------------------------------
 fetch(Pid) ->
@@ -109,7 +109,10 @@ delete(Pid) ->
 %% @end
 %%--------------------------------------------------------------------
 init([Value, LeaseTime]) ->
-    {ok, #state{value = Value, lease_time = LeaseTime}, LeaseTime}.
+    StartTime = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+    {ok,
+     #state{value = Value, lease_time = LeaseTime, start_time = StartTime},
+     time_left(StartTime, LeaseTime)}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -125,8 +128,12 @@ init([Value, LeaseTime]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call(fetch, _From, #state{value = Value, lease_time = LeaseTime} = State) ->
-    {reply, {ok, Value}, State, LeaseTime}.
+handle_call(fetch, _From,  State) ->
+    #state{value = Value,
+	   lease_time = LeaseTime,
+	   start_time = StartTime} = State,
+    TimeLeft = time_left(StartTime, LeaseTime),
+    {reply, {ok, Value}, State, TimeLeft}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -139,7 +146,10 @@ handle_call(fetch, _From, #state{value = Value, lease_time = LeaseTime} = State)
 %% @end
 %%--------------------------------------------------------------------
 handle_cast({replace, Value}, State) ->
-    {noreply, State#state{value = Value}, State#state.lease_time};
+    #state{lease_time = LeaseTime,
+	   start_time = StartTime} = State,
+    TimeLeft = time_left(StartTime, LeaseTime),
+    {noreply, State#state{value = Value}, TimeLeft};
 handle_cast(delete, State) ->
     {stop, normal, State}.
 
@@ -185,3 +195,12 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+time_left(_StartTime, infinity) ->
+    infinity;
+time_left(StartTime, LeaseTime) ->
+    CurrentTime = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+    TimeElapsed = CurrentTime - StartTime, 
+    case LeaseTime - TimeElapsed of
+	Time when Time =< 0 -> 0;
+	Time                -> Time * 1000
+    end.
