@@ -84,7 +84,7 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast({msg, Msg}, State = #state{port=Port}) ->
+handle_cast({send_msg, Msg}, State = #state{port=Port}) ->
     erlang:port_command(Port, Msg ++ "\n"),
     {noreply, State}.
 
@@ -101,12 +101,10 @@ handle_cast({msg, Msg}, State = #state{port=Port}) ->
 handle_info({Port, {data, {_, Data}}}, State = #state{port=Port}) ->
     io:format("~p~n", [Data]),
     {noreply, State};
-handle_info({Port, {exit_status, Status}}, #state{port=Port})
-  when Status == 1 ->
+handle_info({Port, {exit_status, 1 = Status}}, #state{port=Port}) ->
     io:format("BAD SHUTDOWN:~p~n", [Status]),
     {noreply, #state{port=create_port()}};
-handle_info({Port, {exit_status, Status}}, #state{port=Port})
-  when Status == 0 ->
+handle_info({Port, {exit_status, 0 = Status}}, #state{port=Port}) ->
     io:format("GOOD SHUTDOWN:~p~n", [Status]),
     {noreply, #state{port=create_port()}}.
 
