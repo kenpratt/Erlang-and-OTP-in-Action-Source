@@ -8,8 +8,8 @@ PREFIX=$(dirname $PROG_DIR)
 #### Fill in values for these variables ####
 REL_NAME=simple_cache
 REL_VSN=0.1.0.4
-ERTS_VSN=5.7.1
-INVOCATION_SUFFIX=""
+ERTS_VSN=5.7.3
+INVOCATION_SUFFIX="-sname $@"
 ###########################################
 
 
