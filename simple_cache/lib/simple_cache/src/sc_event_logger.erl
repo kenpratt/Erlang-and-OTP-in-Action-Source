@@ -11,7 +11,7 @@
 -behaviour(gen_event).
 
 %% API
--export([start/1, stop/0]).
+-export([add_handler/0, delete_handler/0]).
 
 %% gen_event callbacks
 -export([init/1,
@@ -25,38 +25,26 @@
 %% gen_event callbacks
 %%====================================================================
 %%--------------------------------------------------------------------
-%% @doc
-%% Creates an event manager.
-%% @spec (Options) -> {ok,Pid} | {error,Error}
+%% @doc 
+%% Adds this handler to the sc_event manager.
+%% @spec () -> ok | {'EXIT',Reason} | term()
 %% @end
 %%--------------------------------------------------------------------
-start(Options) ->
-    EventName = sc_event:event_name(),
-    %% gen_event:add_handler/2 doesn't check for duplicates
-    case lists:member(?MODULE, gen_event:which_handlers(EventName)) of
-        true  ->
-            already_started;
-        false ->
-            case gen_event:swap_sup_handler(EventName,
-                                            {EventName, swap},
-                                            {?MODULE, Options}) of
-                ok ->
-                    ok;
-                {error, Reason} ->
-                    throw({error, {?MODULE, start_link, Reason}})
-            end
-    end.
+add_handler() ->
+    sc_event:add_handler(?MODULE, []).
 
 %%--------------------------------------------------------------------
-%% @doc
-%%  Stop this handler.
-%% @spec () -> ok
+%% @doc 
+%% Removes this handler to the sc_event manager.
+%% @spec () -> term() | {error,module_not_found} | {'EXIT',Reason}
 %% @end
 %%--------------------------------------------------------------------
-stop() ->
-    EventName = sc_event:event_name(),
-    gen_event:swap_handler(EventName, {?MODULE, swap}, {EventName, []}).
+delete_handler() ->
+    sc_event:delete_handler(?MODULE, []).
 
+%%====================================================================
+%% gen_event callbacks
+%%====================================================================
 %%--------------------------------------------------------------------
 %% @doc
 %% init/1 is called when a event is being installed to an event manager
@@ -78,7 +66,7 @@ init(_) ->
 %% each installed event handler to handle the event.
 %% @end
 %%--------------------------------------------------------------------
-handle_event({create, Key, Value}, State) ->
+handle_event({create, {Key, Value}}, State) ->
     error_logger:info_msg("create(~w, ~w)", [Key, Value]),
     {ok, State};
 handle_event({lookup, Key}, State) ->
@@ -87,7 +75,7 @@ handle_event({lookup, Key}, State) ->
 handle_event({delete, Key}, State) ->
     error_logger:info_msg("delete(~w)", [Key]),
     {ok, State};
-handle_event({replace, Key, Value}, State) ->
+handle_event({replace, {Key, Value}}, State) ->
     error_logger:info_msg("replace(~w, ~w)", [Key, Value]),
     {ok, State}.
 
