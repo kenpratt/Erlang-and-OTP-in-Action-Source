@@ -43,6 +43,7 @@ start(_StartType, _StartArgs) ->
     sc_store:init(),
     case sc_sup:start_link() of
         {ok, Pid} ->
+	    sc_event_logger:add_handler(),
             {ok, Pid};
         Error ->
             Error
@@ -71,7 +72,7 @@ ensure_contact() ->
 	{ok, ContactNodes} ->
 	    ok = ensure_contact(ContactNodes),
 	    {ok, WaitTime} = get_env(simple_cache, wait_time, 6000),
-	    wait_for_nodes(length(ContactNodes), WaitTime)
+	    wait_for_nodes(ContactNodes, WaitTime)
     end.
 
 ensure_contact([Node|T]) ->
