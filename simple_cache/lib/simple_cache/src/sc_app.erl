@@ -72,7 +72,7 @@ ensure_contact() ->
 	{ok, ContactNodes} ->
 	    ok = ensure_contact(ContactNodes),
 	    {ok, WaitTime} = get_env(simple_cache, wait_time, 6000),
-	    wait_for_nodes(length(ContactNodes), WaitTime)
+	    wait_for_nodes(ContactNodes, WaitTime)
     end.
 
 ensure_contact([Node|T]) ->
