@@ -13,13 +13,13 @@ INVOCATION_SUFFIX=""
 ###########################################
 
 
-export ROOTDIR=$PREFIX/packages/$ERTS_VSN
+export ROOTDIR=$PREFIX
 ERTS_DIR=$ROOTDIR/erts-$ERTS_VSN
 export BINDIR=$ERTS_DIR/bin
 export EMU=beam
 export PROGNAME=erl
 export LD_LIBRARY_PATH=$ERTS_DIR/lib
 
-REL_DIR=$PREFIX/release_packages/$REL_NAME-$REL_VSN/release
+REL_DIR=$PREFIX/releases/$REL_NAME-$REL_VSN
 
 $BINDIR/erlexec -config $REL_DIR/sys.config -boot $REL_DIR/$REL_NAME $INVOCATION_SUFFIX

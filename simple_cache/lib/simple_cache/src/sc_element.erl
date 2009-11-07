@@ -129,7 +129,7 @@ handle_call(fetch, _From, #state{value = Value} = State) ->
 handle_cast({replace, Value}, State) ->
     {noreply, State#state{value = Value}};
 handle_cast(delete, State) ->
-    {stop, ok, State}.
+    {stop, normal, State}.
 
 %%--------------------------------------------------------------------
 %% @private

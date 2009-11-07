@@ -79,13 +79,8 @@ init([]) ->
     Event = {sc_event, {sc_event, start_link, []},
 	     Restart, Shutdown, Type, [sc_event]},
 
-    Guard = {sc_event_guard, {sc_event_guard, start_link,
-			      [sc_event_logger, []]},
-	     Restart, Shutdown, Type, [sc_event_guard]},
 
-
-
-    {ok, {SupFlags, [Event, Guard, ElementSup]}}.
+    {ok, {SupFlags, [Event, ElementSup]}}.
 
 %%%===================================================================
 %%% Internal functions
