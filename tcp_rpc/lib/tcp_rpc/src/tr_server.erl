@@ -26,6 +26,8 @@
 -define(SERVER, ?MODULE). 
 -define(DEFAULT_PORT, 1055).
 
+-include("eunit.hrl").
+
 -record(state, {port, lsock, request_count = 0}).
 
 %%%===================================================================
@@ -129,13 +131,8 @@ handle_cast(stop, State) ->
 handle_info({tcp, Socket, RawData}, State) ->
     RequestCount = State#state.request_count,
     try
-	MFA = re:replace(RawData, "\r\n$", "", [{return, list}]), 
-	{match, [M, F, A]} =
-	    re:run(MFA,
-	           "(.*):(.*)\s*\\((.*)\s*\\)\s*.\s*$",
-                   [{capture, [1,2,3], list}, ungreedy]),
-
-	Result = apply(list_to_atom(M), list_to_atom(F), args_to_terms(A)),
+	{M, F, A} = split_out_mfa(RawData),
+	Result = apply(M, F, A),
 	gen_tcp:send(Socket, io_lib:fwrite("~p~n", [Result]))
     catch 
 	_C:E ->
@@ -180,3 +177,18 @@ args_to_terms(RawArgs) ->
     {ok, Toks, _Line} = erl_scan:string("[" ++ RawArgs ++ "]. ", 1),
     {ok, Args} = erl_parse:parse_term(Toks),
     Args.
+
+split_out_mfa(RawData) ->
+    MFA = re:replace(RawData, "\r\n$", "", [{return, list}]), 
+    {match, [M, F, A]} =
+	re:run(MFA,
+	       "(.*):(.*)\s*\\((.*)\s*\\)\s*.\s*$",
+                   [{capture, [1,2,3], list}, ungreedy]),
+    {list_to_atom(M), list_to_atom(F), args_to_terms(A)}.
+
+%%%===================================================================
+%%% Internal functions
+%%%===================================================================
+split_out_mfa_test() ->
+    RawData = "io:format(\"hello ~p~n\", [testing]).\r\n",
+    ?assertMatch({io, format, ["hello ~p~n", [testing]]}, split_out_mfa(RawData)).
