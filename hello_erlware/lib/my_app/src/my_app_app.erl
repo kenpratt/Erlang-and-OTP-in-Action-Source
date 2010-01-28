@@ -3,14 +3,15 @@
 %%% @doc
 %%%
 %%% @end
-%%% @copyright 2008 Martin Logan
+%%% @copyright 2010 Martin Logan
 %%%----------------------------------------------------------------,
--module(tr_app).
+-module(my_app_app).
 
 -behaviour(application).
 
 %% Application callbacks
 -export([start/2, stop/1]).
+
 
 %%%===================================================================
 %%% Application callbacks
@@ -33,7 +34,7 @@
 %% @end
 %%--------------------------------------------------------------------
 start(_StartType, _StartArgs) ->
-    case tr_sup:start_link() of
+    case my_app_sup:start_link() of
         {ok, Pid} ->
             {ok, Pid};
         Error ->
@@ -56,5 +57,7 @@ stop(_State) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+					     
 
 
