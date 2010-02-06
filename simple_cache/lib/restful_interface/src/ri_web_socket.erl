@@ -62,7 +62,7 @@ send(Pid, Packet) ->
 %%--------------------------------------------------------------------
 init([LSock]) ->
     error_logger:info_msg("ri_web_socket:init/1~n"),
-    {ok, FSMPid} = ri_web_fsm:start_link(self()),
+    {ok, FSMPid} = ri_web_fsm_impl:start_link(self()),
     {ok, #state{lsock = LSock, fsm_pid = FSMPid}, 0}.
 
 %%--------------------------------------------------------------------

@@ -5,6 +5,7 @@
    {modules, [ri_app,
               ri_sup,
               ri_web_socket,
+              ri_web_fsm_impl,
               ri_web_fsm]},
    {registered,[pi_sup]},
    {applications, [kernel, stdlib]},

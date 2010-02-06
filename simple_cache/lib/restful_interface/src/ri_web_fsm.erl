@@ -16,7 +16,9 @@
 -behaviour(gen_fsm).
 
 %% API
--export([start_link/1, packet/2]).
+-export([start_link/2, packet/2]).
+
+-export([http_message/3, http_message/1]).
 
 %% gen_fsm callbacks
 -export([
@@ -38,7 +40,7 @@
 
 -include("eunit.hrl").
 
--record(state, {socket_manager, head = [<<>>], body = <<>>, content_length}).
+-record(state, {socket_manager, head = [<<>>], body = <<>>, content_length, callback}).
 
 -define(SERVER, ?MODULE).
 
@@ -53,11 +55,11 @@
 %% initialize. To ensure a synchronized start-up procedure, this
 %% function does not return until Module:init/1 has returned.
 %%
-%% @spec start_link(SocketManager::pid()) -> {ok, Pid} | ignore | {error, Error}
+%% @spec start_link(CallBack::atom(), SocketManager::pid()) -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link(SocketManager) ->
-    gen_fsm:start_link(?MODULE, [SocketManager], []).
+start_link(CallBack, SocketManager) ->
+    gen_fsm:start_link(?MODULE, [SocketManager, CallBack], []).
 
 %%--------------------------------------------------------------------
 %% @doc create a new packet event of data has been received
@@ -67,6 +69,35 @@ start_link(SocketManager) ->
 %%--------------------------------------------------------------------
 packet(FSMPid, Packet) ->
     gen_fsm:send_event(FSMPid, {packet, Packet}).
+
+%%%===================================================================
+%%% container helper functions
+%%%===================================================================
+
+%%--------------------------------------------------------------------
+%% @doc helper function for creating a very minimally specified
+%%      http message
+%% @spec (Code, Headers, Body) -> ok
+%% @end
+%%--------------------------------------------------------------------
+http_message(Code, Headers, Body) when is_list(Body) ->
+    http_message(Code, Headers, list_to_binary(Body));
+http_message(Code, Headers, Body) ->
+    ["HTTP/1.1 ", code_to_binary(Code), "\r\n",
+     format_headers(Headers),
+     "Content-Length: ", integer_to_list(size(Body)), 
+     "\r\n\r\n",
+     Body].
+
+%% @spec (Code) -> ok
+%% @equiv http_message(Code, [{"Content-Type", "text/html"}], "") -> ok
+http_message(Code) ->
+    http_message(Code, [{"Content-Type", "text/html"}], "").
+
+format_headers([{Header, Value}|T]) ->
+    [Header, ": ", Value, "\r\n"|format_headers(T)];
+format_headers([]) ->
+    [].
 
 %%%===================================================================
 %%% gen_fsm callbacks
@@ -85,9 +116,9 @@ packet(FSMPid, Packet) ->
 %%                     {stop, StopReason}
 %% @end
 %%--------------------------------------------------------------------
-init([SocketManager]) ->
+init([SocketManager, CallBack]) ->
     error_logger:info_msg("ri_web_fsm:init/1~n"),
-    {ok, build_message_head, #state{socket_manager = SocketManager}}.
+    {ok, build_message_head, #state{socket_manager = SocketManager, callback=CallBack}}.
 
 %%% All states below here - they are accept, build_message_head,
 %%% continue, build packet_body and reply
@@ -127,9 +158,9 @@ build_message_body({packet, Packet}, State) ->
 
 reply(timeout, State) -> 
     #state{socket_manager = SocketManager,
-	   head           = [InitialRequestLine|_],
+	   head           = Head,
 	   body           = Body} = State,
-    Reply = handle_message(InitialRequestLine, Body),
+    Reply = handle_message(Head, Body, State#state.callback),
     ri_web_socket:send(SocketManager, Reply),
     {stop, normal, State}.
 
@@ -221,7 +252,7 @@ handle_info(_Info, StateName, State) ->
 terminate(normal, _StateName, _State) ->
     ok;
 terminate(_Reason, _StateName, #state{socket_manager = SocketManager}) ->
-    Err = create_http_message(500, "text/html", "500 Internal Server Error"),
+    Err = http_message(500, [{"Content-Type", "text/html"}], "500 Internal Server Error"),
     ri_web_socket:send(SocketManager, Err),
     ok.
 %%--------------------------------------------------------------------
@@ -240,30 +271,15 @@ code_change(_OldVsn, StateName, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
-handle_message({http_request, 'GET', {abs_path, [$/|Key]}, _}, _Body) ->
-    case simple_cache:lookup(Key) of
-	{ok, Value}        -> create_http_message(200, "text/html", Value);
-	{error, not_found} -> create_http_message(404)
-    end;
-handle_message({http_request,'PUT',{abs_path, [$/|Key]},_}, Body) ->
-    simple_cache:insert(Key, Body),
-    create_http_message(200);
-handle_message({http_request, 'DELETE', {abs_path, [$/|Key]}, _}, _Body) ->
-    simple_cache:delete(Key),
-    create_http_message(200).
+handle_message([{http_request, 'GET', _, _} = InitialRequestLine|Head], Body, CallBack) ->
+    CallBack:get(InitialRequestLine, Head, Body);
+handle_message([{http_request,'PUT',_,_} = InitialRequestLine|Head], Body, CallBack) ->
+    CallBack:put(InitialRequestLine, Head, Body);
+handle_message([{http_request, 'DELETE', _, _} = InitialRequestLine|Head], Body, CallBack) ->
+    CallBack:delete(InitialRequestLine, Head, Body);
+handle_message([{http_request, 'POST', _, _} = InitialRequestLine|Head], Body, CallBack) ->
+    CallBack:post(InitialRequestLine, Head, Body).
 
-create_http_message(Code) ->
-    create_http_message(Code, "text/html", "").
-
-create_http_message(Code, ContentType, Body) when is_list(Body) ->
-    create_http_message(Code, ContentType, list_to_binary(Body));
-create_http_message(Code, ContentType, Body) ->
-    ["HTTP/1.1 ", code_to_binary(Code), "\r\n"
-     "Content-Type: ", ContentType, "\r\n"
-     "Content-Length: ", integer_to_list(size(Body)), 
-     "\r\n\r\n",
-     Body].
-%application/x-protobuf  ) ->
 
 decode_initial_request_line_and_header([Unparsed], Packet) ->
     decode_initial_request_line(list_to_binary([Unparsed, Packet]));
@@ -304,7 +320,7 @@ header_value_search(Key, List, Default) ->
 %% @end
 send_continue(SocketManager, Headers) ->
     case lists:keymember("100-continue", 5, Headers) of
-	true  -> ri_web_socket:send(SocketManager, create_http_message(100));
+	true  -> ri_web_socket:send(SocketManager, http_message(100));
 	false -> ok
     end.
 
