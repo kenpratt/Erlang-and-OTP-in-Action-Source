@@ -77,11 +77,9 @@ insert(Key, Pid) when is_pid(Pid) ->
 
 dynamic_db_init([]) ->
     delete_schema(),
-    mnesia:create_schema([node()]),
     mnesia:create_table(key_to_pid, [{index, [pid]}, {attributes, record_info(fields, key_to_pid)}]);
 dynamic_db_init(CacheNodes) ->
     delete_schema(),
-    mnesia:create_schema([node()]),
     add_extra_nodes(CacheNodes).
 
 %% deletes a local schema.
