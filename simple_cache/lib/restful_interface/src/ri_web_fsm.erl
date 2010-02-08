@@ -273,12 +273,16 @@ code_change(_OldVsn, StateName, State, _Extra) ->
 
 handle_message([{http_request, 'GET', _, _} = InitialRequestLine|Head], Body, CallBack) ->
     CallBack:get(InitialRequestLine, Head, Body);
+handle_message([{http_request, 'POST', _, _} = InitialRequestLine|Head], Body, CallBack) ->
+    CallBack:post(InitialRequestLine, Head, Body);
 handle_message([{http_request,'PUT',_,_} = InitialRequestLine|Head], Body, CallBack) ->
     CallBack:put(InitialRequestLine, Head, Body);
 handle_message([{http_request, 'DELETE', _, _} = InitialRequestLine|Head], Body, CallBack) ->
     CallBack:delete(InitialRequestLine, Head, Body);
-handle_message([{http_request, 'POST', _, _} = InitialRequestLine|Head], Body, CallBack) ->
-    CallBack:post(InitialRequestLine, Head, Body).
+handle_message([{http_request, 'HEAD', _, _} = InitialRequestLine|Head], Body, CallBack) ->
+    CallBack:head(InitialRequestLine, Head, Body);
+handle_message([{http_request, 'OPTIONS', _, _} = InitialRequestLine|Head], Body, CallBack) ->
+    CallBack:options(InitialRequestLine, Head, Body).
 
 
 decode_initial_request_line_and_header([Unparsed], Packet) ->
