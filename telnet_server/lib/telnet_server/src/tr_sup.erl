@@ -1,10 +1,10 @@
 %%%----------------------------------------------------------------
 %%% @author  Martin Logan <martinjlogan@erlware.org>
-%%% @doc
-%%% @end
+%%% @doc Root supervisor for `tcp_rpc'.
 %%% @copyright 2008 Martin Logan
+%%% @end
 %%%----------------------------------------------------------------
--module(telnet_server_sup).
+-module(tr_sup).
 
 -behaviour(supervisor).
 
@@ -48,23 +48,12 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    RestartStrategy = one_for_one,
-    MaxRestarts = 1000,
-    MaxSecondsBetweenRestarts = 3600,
-
-    SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
-
-    Restart = permanent,
-    Shutdown = 2000,
-    Type = worker,
-
-    AChild = {'AName', {'AModule', start_link, []},
-              Restart, Shutdown, Type, ['AModule']},
-
-    {ok, {SupFlags, [AChild]}}.
+    Server = {tr_server, {tr_server, start_link, []},
+              permanent, 2000, worker, [tr_server]},
+    Children = [Server],
+    RestartStrategy = {one_for_one, 0, 1},
+    {ok, {RestartStrategy, Children}}.
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
-
