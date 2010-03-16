@@ -12,8 +12,6 @@
 
 -behaviour(gen_server).
 
--include_lib("eunit/include/eunit.hrl").
-
 %% API
 -export([
          start_link/1,
@@ -126,10 +124,3 @@ args_to_terms(RawArgs) ->
     {ok, Toks, _Line} = erl_scan:string("[" ++ RawArgs ++ "]. ", 1),
     {ok, Args} = erl_parse:parse_term(Toks),
     Args.
-
-
-%% test
-
-startstop_test() ->
-    {ok, _} = tr_server:start_link(1055),
-    ok = tr_server:stop().
