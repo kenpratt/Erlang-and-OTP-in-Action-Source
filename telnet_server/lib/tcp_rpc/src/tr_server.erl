@@ -12,6 +12,8 @@
 
 -behaviour(gen_server).
 
+-include_lib("eunit/include/eunit.hrl").
+
 %% API
 -export([
          start_link/0,
@@ -185,3 +187,11 @@ args_to_terms(RawArgs) ->
     {ok, Toks, _Line} = erl_scan:string("[" ++ RawArgs ++ "]. ", 1),
     {ok, Args} = erl_parse:parse_term(Toks),
     Args.
+
+
+%%% Unit tests
+
+split_out_mfa_test() ->
+    RawData = "io:format(\"hello ~p~n\", [testing]).\r\n",
+    ?assertMatch({io, format, ["hello ~p~n", [testing]]},
+		 split_out_mfa(RawData)).
