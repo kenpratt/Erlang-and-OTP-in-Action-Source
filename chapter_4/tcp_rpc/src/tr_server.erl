@@ -49,7 +49,7 @@ start_link(Port) ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [Port], []).
 
 %% @spec start_link() -> {ok, Pid}
-%% @equiv start_link(Port::integer())
+%% @doc Calls `start_link()' using the default port.
 start_link() ->
     start_link(?DEFAULT_PORT).
 
