@@ -45,7 +45,7 @@ start_link(Port) ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [Port], []).
 
 %% @spec start_link() -> {ok, Pid}
-%% @equiv start_link(Port::integer())
+%% @doc Calls `start_link()' using the default port.
 start_link() ->
     start_link(?DEFAULT_PORT).
 
@@ -131,8 +131,8 @@ handle_info({tcp, Socket, RawData}, State) ->
     RequestCount = State#state.request_count,
     {noreply, State#state{request_count = RequestCount + 1}};
 handle_info(timeout, #state{lsock = LSock} = State) ->
-        {ok, _Sock} = gen_tcp:accept(LSock),
-        {noreply, State}.
+    {ok, _Sock} = gen_tcp:accept(LSock),
+    {noreply, State}.
 
 %%--------------------------------------------------------------------
 %% @private
