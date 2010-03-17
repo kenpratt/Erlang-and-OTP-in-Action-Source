@@ -8,6 +8,8 @@ erl -pa ./ebin
 
 Then, run the following in the Erlang shell:
 
-1> application:start(simple_cache).
+1> application:start(sasl).
 ok
-2> 
+2> application:start(simple_cache).
+ok
+3> 
