@@ -6,6 +6,6 @@
              sc_sup
             ]},
   {registered, [sc_sup]},
-  {applications, [kernel, sasl, stdlib]},
+  {applications, [kernel, stdlib]},
   {mod, {sc_app, []}}
  ]}.
