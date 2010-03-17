@@ -12,8 +12,9 @@
 
 %% API
 -export([
-	 start_link/1,
+	 start_link/2,
 	 create/1,
+	 create/2,
 	 fetch/1,
 	 replace/2,
 	 delete/1
@@ -23,9 +24,10 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
--define(SERVER, ?MODULE).
+-define(SERVER, ?MODULE). 
+-define(DEFAULT_LEASE_TIME, 60 * 60 * 24). % 1 day default in seconds 
 
--record(state, {value}).
+-record(state, {value, lease_time, start_time}).
 
 %%%===================================================================
 %%% API
@@ -35,27 +37,37 @@
 %% @doc
 %% Starts the server
 %%
-%% @spec start_link(Value) -> {ok, Pid} | ignore | {error, Error}
+%% @spec start_link(Value, LeaseTime) -> {ok, Pid} | ignore | {error, Error}
+%% where
+%%  LeaseTime = integer() | infinity
 %% @end
 %%--------------------------------------------------------------------
-start_link(Value) ->
-    gen_server:start_link(?MODULE, [Value], []).
+start_link(Value, LeaseTime) ->
+    gen_server:start_link(?MODULE, [Value, LeaseTime], []).
+
 
 %%--------------------------------------------------------------------
 %% @doc
 %%  Create an element in the cache
 %%
-%% @spec create(Value) -> void()
+%% @spec create(Value, LeaseTime) -> void()
+%% where
+%%  LeaseTime = integer() | infinity
 %% @end
 %%--------------------------------------------------------------------
+create(Value, LeaseTime) ->
+    sc_sup:start_child(Value, LeaseTime).
+
+%% @spec create(Value) -> void()
+%% @equiv create(Value, DefaultLeaseTime)
 create(Value) ->
-    sc_element_sup:start_child(Value).
+    create(Value, ?DEFAULT_LEASE_TIME).
 
 %%--------------------------------------------------------------------
 %% @doc
 %% Fetch an element from the cache.
 %%
-%% @spec fetch(Pid) -> {ok, Value} | {error, Reason}
+%% @spec fetch(Pid) -> {ok, Value}  
 %% @end
 %%--------------------------------------------------------------------
 fetch(Pid) ->
@@ -75,12 +87,12 @@ replace(Pid, Value) ->
 %% @doc
 %% Delete an element from the cache.
 %%
-%% @spec delete(Pid) -> ok
+%% @spec delete(Pid) -> ok 
 %% @end
 %%--------------------------------------------------------------------
 delete(Pid) ->
     gen_server:cast(Pid, delete).
-
+    
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -96,9 +108,11 @@ delete(Pid) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([Value]) ->
-    sc_store:insert(self()), %% This should be the last thing we do in init/1.
-    {ok, #state{value = Value}}.
+init([Value, LeaseTime]) ->
+    StartTime = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+    {ok,
+     #state{value = Value, lease_time = LeaseTime, start_time = StartTime},
+     time_left(StartTime, LeaseTime)}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -114,8 +128,12 @@ init([Value]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call(fetch, _From, #state{value = Value} = State) ->
-    {reply, {ok, Value}, State}.
+handle_call(fetch, _From,  State) ->
+    #state{value = Value,
+	   lease_time = LeaseTime,
+	   start_time = StartTime} = State,
+    TimeLeft = time_left(StartTime, LeaseTime),
+    {reply, {ok, Value}, State, TimeLeft}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -128,9 +146,12 @@ handle_call(fetch, _From, #state{value = Value} = State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_cast({replace, Value}, State) ->
-    {noreply, State#state{value = Value}};
+    #state{lease_time = LeaseTime,
+	   start_time = StartTime} = State,
+    TimeLeft = time_left(StartTime, LeaseTime),
+    {noreply, State#state{value = Value}, TimeLeft};
 handle_cast(delete, State) ->
-    {stop, ok, State}.
+    {stop, normal, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -142,8 +163,8 @@ handle_cast(delete, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(_Info, State) ->
-    {noreply, State}.
+handle_info(timeout, State) ->
+    {stop, normal, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -174,3 +195,12 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+time_left(_StartTime, infinity) ->
+    infinity;
+time_left(StartTime, LeaseTime) ->
+    CurrentTime = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+    TimeElapsed = CurrentTime - StartTime, 
+    case LeaseTime - TimeElapsed of
+	Time when Time =< 0 -> 0;
+	Time                -> Time * 1000
+    end.

@@ -13,7 +13,7 @@
 %% API
 -export([
 	 start_link/0,
-	 start_child/1
+	 start_child/2
 	]).
 
 %% Supervisor callbacks
@@ -39,11 +39,11 @@ start_link() ->
 %% @doc
 %% Start a child process, an sc_element.
 %%
-%% @spec start_child(Value) -> void()
+%% @spec start_child(Value, LeaseTime) -> void()
 %% @end
 %%--------------------------------------------------------------------
-start_child(Value) ->
-    supervisor:start_child(?SERVER, [Value]).
+start_child(Value, LeaseTime) ->
+    supervisor:start_child(?SERVER, [Value, LeaseTime]).
 
 %%%===================================================================
 %%% Supervisor callbacks
@@ -63,9 +63,9 @@ start_child(Value) ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    RestartStrategy = one_for_one,
-    MaxRestarts = 1000,
-    MaxSecondsBetweenRestarts = 3600,
+    RestartStrategy = simple_one_for_one,
+    MaxRestarts = 0,
+    MaxSecondsBetweenRestarts = 1,
 
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
 
@@ -73,19 +73,10 @@ init([]) ->
     Shutdown = brutal_kill,
     Type = worker,
 
-    ElementSup = {sc_element_sup, {sc_element_sup, start_link, []},
-		  Restart, Shutdown, supervisor, [sc_element]},
+    AChild = {sc_element, {sc_element, start_link, []},
+	      Restart, Shutdown, Type, [sc_element]},
 
-    Event = {sc_event, {sc_event, start_link, []},
-	     Restart, Shutdown, Type, [sc_event]},
-
-    Guard = {sc_event_guard, {sc_event_guard, start_link,
-			      [sc_event_logger, []]},
-	     Restart, Shutdown, Type, [sc_event_guard]},
-
-
-
-    {ok, {SupFlags, [Event, Guard, ElementSup]}}.
+    {ok, {SupFlags, [AChild]}}.
 
 %%%===================================================================
 %%% Internal functions

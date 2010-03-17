@@ -30,13 +30,12 @@
 insert(Key, Value) ->
     case sc_store:lookup(Key) of
 	{ok, Pid} ->
-	    sc_event:replace(Key),
 	    sc_element:replace(Pid, Value);
 	{error, _Reason} ->
-	    sc_event:create(Key, Value),
-	    sc_element:create(Key, Value)
+	    {ok, Pid} = sc_element:create(Value),
+	    sc_store:insert(Key, Pid)
     end.
-
+    
 %%--------------------------------------------------------------------
 %% @doc lookup an element in the cache.
 %% @spec lookup(Key) -> {ok, Value} | {error, not_found}
@@ -46,15 +45,16 @@ insert(Key, Value) ->
 %% @end
 %%--------------------------------------------------------------------
 lookup(Key) ->
-    sc_event:lookup(Key),
-    case sc_store:lookup(Key) of
-	{ok, Pid} ->
-	    sc_element:fetch(Pid);
-	{error, Reason} ->
-	    {error, Reason}
+    try 
+	{ok, Pid} = sc_store:lookup(Key),
+	{ok, Value} = sc_element:fetch(Pid),
+	{ok, Value}
+    catch
+	_Class:_Exception ->
+	    {error, not_found}
     end.
 
-
+    
 
 %%--------------------------------------------------------------------
 %% @doc delete an element into the cache.
@@ -64,7 +64,6 @@ lookup(Key) ->
 %% @end
 %%--------------------------------------------------------------------
 delete(Key) ->
-    sc_event:delete(Key),
     case sc_store:lookup(Key) of
 	{ok, Pid} ->
 	    sc_element:delete(Pid);
