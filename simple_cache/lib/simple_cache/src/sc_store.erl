@@ -10,11 +10,11 @@
 
 %% API
 -export([
-	 init/0,
-	 insert/2,
-	 delete/1,
-	 lookup/1
-	]).
+         init/0,
+         insert/2,
+         delete/1,
+         lookup/1
+        ]).
 
 -define(TABLE_ID, ?MODULE).
 
@@ -30,25 +30,6 @@
 init() ->
     ets:new(?TABLE_ID, [public, named_table]),
     ok.
-    
-%%--------------------------------------------------------------------
-%% @doc Delete an element by pid from the registrar.
-%% @spec delete(Pid) -> void()
-%% @end
-%%--------------------------------------------------------------------
-delete(Pid) ->
-    ets:match_delete(?TABLE_ID, {'_', Pid}).
-
-%%--------------------------------------------------------------------
-%% @doc Find a pid given a key.
-%% @spec lookup(Key) -> {ok, Pid} | {error, not_found}
-%% @end
-%%--------------------------------------------------------------------
-lookup(Key) ->
-    case ets:lookup(?TABLE_ID, Key) of
-	[{Key, Pid}] -> {ok, Pid};
-	[]           -> {error, not_found}
-    end.
 
 %%--------------------------------------------------------------------
 %% @doc Insert a key and pid.
@@ -57,6 +38,25 @@ lookup(Key) ->
 %%--------------------------------------------------------------------
 insert(Key, Pid) when is_pid(Pid) ->
     ets:insert(?TABLE_ID, {Key, Pid}).
+
+%%--------------------------------------------------------------------
+%% @doc Find a pid given a key.
+%% @spec lookup(Key) -> {ok, Pid} | {error, not_found}
+%% @end
+%%--------------------------------------------------------------------
+lookup(Key) ->
+    case ets:lookup(?TABLE_ID, Key) of
+        [{Key, Pid}] -> {ok, Pid};
+        []           -> {error, not_found}
+    end.
+
+%%--------------------------------------------------------------------
+%% @doc Delete an element by pid from the registrar.
+%% @spec delete(Pid) -> void()
+%% @end
+%%--------------------------------------------------------------------
+delete(Pid) ->
+    ets:match_delete(?TABLE_ID, {'_', Pid}).
 
 %%%===================================================================
 %%% Internal functions

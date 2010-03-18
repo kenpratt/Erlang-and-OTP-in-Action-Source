@@ -13,8 +13,8 @@
 start_link() ->
     supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
-start_child(Key, Value) ->
-    supervisor:start_child(?SERVER, [Key, Value]).
+start_child(Value, LeaseTime) ->
+    supervisor:start_child(?SERVER, [Value, LeaseTime]).
 
 init([]) ->
     Element = {sc_element, {sc_element, start_link, []},

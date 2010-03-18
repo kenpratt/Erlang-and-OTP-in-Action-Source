@@ -1,9 +1,9 @@
 %%%----------------------------------------------------------------
 %%% @author Martin Logan & Eric Merritt <contact@erlware.org>
 %%% @doc
-%%%
-%%% @end
+%%%   Application behaviour implementation for simple_cache.
 %%% @copyright 2008 Martin Logan & Eric Merritt
+%%% @end
 %%%----------------------------------------------------------------,
 -module(sc_app).
 
@@ -37,8 +37,8 @@ start(_StartType, _StartArgs) ->
     case sc_sup:start_link() of
         {ok, Pid} ->
             {ok, Pid};
-        Error ->
-            Error
+        Other ->
+            {error, Other}
     end.
 
 %%--------------------------------------------------------------------
@@ -57,5 +57,3 @@ stop(_State) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
-
