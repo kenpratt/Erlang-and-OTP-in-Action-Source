@@ -56,7 +56,7 @@ start_link(Value, LeaseTime) ->
 %% @end
 %%--------------------------------------------------------------------
 create(Value, LeaseTime) ->
-    sc_sup:start_child(Value, LeaseTime).
+    sc_element_sup:start_child(Value, LeaseTime).
 
 %% @spec create(Value) -> void()
 %% @equiv create(Value, DefaultLeaseTime)

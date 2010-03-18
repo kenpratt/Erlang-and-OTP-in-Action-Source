@@ -62,10 +62,12 @@ start_child(Value, LeaseTime) ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    Element = {sc_element, {sc_element, start_link, []},
-               temporary, brutal_kill, worker, [sc_element]},
-    Children = [Element],
-    RestartStrategy = {simple_one_for_one, 0, 1},
+    ElementSup = {sc_element_sup, {sc_element_sup, start_link, []},
+                  temporary, brutal_kill, supervisor, [sc_element]},
+    Event = {sc_event, {sc_event, start_link, []},
+             temporary, brutal_kill, worker, [sc_event]},
+    RestartStrategy = {one_for_one, 1000, 3600},
+    Children = [Event, ElementSup],
     {ok, {RestartStrategy, Children}}.
 
 %%%===================================================================

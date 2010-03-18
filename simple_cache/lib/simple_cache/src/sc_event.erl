@@ -10,13 +10,12 @@
 
 %% API
 -export([start_link/0,
-         event_name/0,
          lookup/1,
          create/2,
-	 replace/2,
+         replace/2,
          delete/1,
-         add_handler/2,
-         add_sup_handler/2]).
+         delete_handler/2,
+         add_handler/2]).
 
 -define(SERVER, ?MODULE).
 
@@ -35,22 +34,12 @@ start_link() ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%%  Get the event name from the system.
-%% @spec () -> EventName
-%% @end
-%%--------------------------------------------------------------------
-event_name() ->
-    ?SERVER.
-
-%%--------------------------------------------------------------------
-%% @doc
 %%  Event fired when a new element is inserted
 %% @spec (Key, Value) -> ok
 %% @end
 %%--------------------------------------------------------------------
 create(Key, Value) ->
-    gen_event:notify(?SERVER, {create, Key, Value}).
-
+    gen_event:notify(?SERVER, {create, {Key, Value}}).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -77,7 +66,7 @@ delete(Key) ->
 %% @end
 %%--------------------------------------------------------------------
 replace(Key, Value) ->
-    gen_event:notify(?SERVER, {replace, Key, Value}).
+    gen_event:notify(?SERVER, {replace, {Key, Value}}).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -90,9 +79,9 @@ add_handler(Handler, Args) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Add a handler for this event system.
+%% Delete a handler for this event system.
 %% @spec (Handler, Args) -> ok
 %% @end
 %%--------------------------------------------------------------------
-add_sup_handler(Handler, Args) ->
-    gen_event:add_sup_handler(?SERVER, Handler, Args).
+delete_handler(Handler, Args) ->
+    gen_event:delete_handler(?SERVER, Handler, Args).
