@@ -22,6 +22,8 @@
          code_change/3,
          terminate/2]).
 
+-record(state, {}).
+
 %%====================================================================
 %% gen_event callbacks
 %%====================================================================
@@ -54,8 +56,8 @@ delete_handler() ->
 %% @spec (Args) -> {ok, State}
 %% @end
 %%--------------------------------------------------------------------
-init(_) ->
-    {ok, []}.
+init([]) ->
+    {ok, #state{}}.
 
 %%--------------------------------------------------------------------
 %% @spec  (Event, State) -> {ok, State} |
@@ -93,8 +95,9 @@ handle_event({replace, {Key, Value}}, State) ->
 %% handler to handle the request.
 %% @end
 %%--------------------------------------------------------------------
-handle_call(_Query, State) ->
-    {ok, {error, bad_query}, State}.
+handle_call(_Request, State) ->
+    Reply = ok,
+    {ok, Reply, State}.
 
 %%--------------------------------------------------------------------
 %% @spec (Info, State) -> {ok, State} |
@@ -107,7 +110,7 @@ handle_call(_Query, State) ->
 %% request (or a system message).
 %% @end
 %%--------------------------------------------------------------------
-handle_info(_, State) ->
+handle_info(_Info, State) ->
     {ok, State}.
 
 %%--------------------------------------------------------------------
@@ -119,7 +122,7 @@ handle_info(_, State) ->
 %% do any necessary cleaning up.
 %% @end
 %%--------------------------------------------------------------------
-terminate(_Reason, _State)  ->
+terminate(_Reason, _State) ->
     ok.
 
 %%--------------------------------------------------------------------

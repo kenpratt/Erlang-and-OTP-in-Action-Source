@@ -15,10 +15,10 @@ start_link() ->
 
 init([]) ->
     ElementSup = {sc_element_sup, {sc_element_sup, start_link, []},
-                      permanent, 2000, supervisor, [sc_element]},
+                  permanent, 2000, supervisor, [sc_element]},
 
     EventManager = {sc_event, {sc_event, start_link, []},
-                       permanent, 2000, worker, [sc_event]},
+                    permanent, 2000, worker, [sc_event]},
 
     Children = [ElementSup, EventManager],
     RestartStrategy = {one_for_one, 4, 3600},

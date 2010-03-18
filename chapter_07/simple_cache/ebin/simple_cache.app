@@ -8,7 +8,7 @@
              sc_store,
              sc_element,
              sc_event,
-     	     sc_event_logger]},
+             sc_event_logger]},
   {registered, [sc_sup]},
   {applications, [kernel, sasl, stdlib]},
   {mod, {sc_app, []}}
