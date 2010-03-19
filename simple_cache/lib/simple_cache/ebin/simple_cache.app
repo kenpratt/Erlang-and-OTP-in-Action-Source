@@ -3,7 +3,7 @@
 
 {application, simple_cache,
  [{description, "A simple caching system"},
-  {vsn, "0.1.0.1"},
+  {vsn, "0.1.0.3"},
   {modules, [simple_cache,
              sc_app,
              sc_sup,
