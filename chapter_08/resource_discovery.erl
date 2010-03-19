@@ -43,6 +43,12 @@ init([]) ->
                 local_resources       = dict:new(),
                 resources             = dict:new()}}.
 
+handle_call({fetch_resources, Type}, _From, State) ->
+    {reply, dict:find(Type, State#state.resources), State};
+handle_call(_Request, _From, State) ->
+    Reply = ok,
+    {reply, Reply, State}.
+
 handle_cast({add_target_resource_type, Type}, State) ->
     TargetTypes = State#state.target_resource_types,
     NewTargetTypes = [Type | lists:delete(Type, TargetTypes)],
@@ -78,13 +84,7 @@ handle_cast({trade_resources, {ReplyTo, RemoteResources}},
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
-handle_call({fetch_resources, Type}, _From, State) ->
-    {reply, dict:find(Type, State#state.resources), State};
-handle_call(_Request, _From, State) ->
-    Reply = ok,
-    {reply, Reply, State}.
-
-handle_info(_Msg, State) ->
+handle_info(_Info, State) ->
     {noreply, State}.
 
 terminate(_Reason, _State) ->
