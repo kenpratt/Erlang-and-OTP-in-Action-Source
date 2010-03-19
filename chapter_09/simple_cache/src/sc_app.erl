@@ -25,7 +25,7 @@ stop(_State) ->
     ok.
 
 ensure_contact() ->
-    DefaultNodes = ['contact1@erlware.org', 'contact2@erlware.org'],
+    DefaultNodes = ['contact1@localhost', 'contact2@localhost'],
     case get_env(simple_cache, contact_nodes, DefaultNodes) of
         [] ->
             {error, no_contact_nodes};
@@ -44,10 +44,10 @@ ensure_contact(ContactNodes) ->
             wait_for_nodes(length(Answering), WaitTime)
     end.
 
-wait_for_nodes(ContactNodes, WaitTime) ->
+wait_for_nodes(MinNodes, WaitTime) ->
     Slices = 10,
     SliceTime = round(WaitTime/Slices),
-    wait_for_nodes(length(ContactNodes), SliceTime, Slices).
+    wait_for_nodes(MinNodes, SliceTime, Slices).
 
 wait_for_nodes(_MinNodes, _SliceTime, 0) ->
     ok;

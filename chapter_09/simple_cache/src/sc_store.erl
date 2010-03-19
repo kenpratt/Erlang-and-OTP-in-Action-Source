@@ -16,7 +16,7 @@ init() ->
     mnesia:stop(),
     mnesia:delete_schema([node()]),
     mnesia:start(),
-    {ok, CacheNodes} = sc_resource_discovery:fetch_resources(simple_cache),
+    {ok, CacheNodes} = resource_discovery:fetch_resources(simple_cache),
     dynamic_db_init(lists:delete(node(), CacheNodes)).
 
 insert(Key, Pid) ->

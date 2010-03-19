@@ -2,14 +2,22 @@ To build this code, run the following command:
 
 erlc -o ./ebin ./src/*.erl
 
-To run the program, first start Erlang like this:
+First start one or two contact nodes. Ensure that the default
+node names in sc_app:ensure_contact() match your host name.
+(Edit and recompile if necessary.) For example:
 
-erl -pa ./ebin
+erl -name contact1
+
+To run the program, start Erlang like this:
+
+erl -name mynode -pa ./ebin -pa ../resource_discovery/ebin/
 
 Then, run the following in the Erlang shell:
 
 1> application:start(sasl).
 ok
-2> application:start(simple_cache).
+2> application:start(resource_discovery).
 ok
-3> 
+3> application:start(simple_cache).
+ok
+4> 
