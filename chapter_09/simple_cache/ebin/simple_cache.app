@@ -1,6 +1,6 @@
 {application, simple_cache,
  [{description, "A simple caching system"},
-  {vsn, "0.1.0"},
+  {vsn, "0.3.0"},
   {modules, [simple_cache,
              sc_app,
              sc_sup,
@@ -10,6 +10,6 @@
              sc_event,
              sc_event_logger]},
   {registered, [sc_sup]},
-  {applications, [kernel, sasl, stdlib]},
+  {applications, [kernel, sasl, stdlib, resource_discovery]},
   {mod, {sc_app, []}}
  ]}.

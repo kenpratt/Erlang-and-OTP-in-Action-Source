@@ -1,4 +1,4 @@
--module(resource_discovery).
+-module(rd_server).
 
 -behaviour(gen_server).
 
@@ -8,7 +8,7 @@
          add_local_resource/2,
          fetch_resources/1,
          trade_resources/0
-        ]).
+	]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
