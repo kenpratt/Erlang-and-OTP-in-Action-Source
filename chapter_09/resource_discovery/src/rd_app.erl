@@ -5,7 +5,7 @@
 -export([start/2, stop/1]).
 
 start(_StartType, _StartArgs) ->
-    case tr_sup:start_link() of
+    case rd_sup:start_link() of
         {ok, Pid} ->
             {ok, Pid};
         Other ->
