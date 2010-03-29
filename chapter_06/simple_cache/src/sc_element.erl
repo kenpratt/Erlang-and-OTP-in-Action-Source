@@ -4,6 +4,7 @@
 
 -export([
          start_link/2,
+         create/2,
          create/1,
          fetch/1,
          replace/2,
