@@ -70,16 +70,16 @@ init([]) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_event({create, {Key, Value}}, State) ->
-    error_logger:info_msg("create(~w, ~w)", [Key, Value]),
+    error_logger:info_msg("create(~w, ~w)~n", [Key, Value]),
     {ok, State};
 handle_event({lookup, Key}, State) ->
-    error_logger:info_msg("lookup(~w)", [Key]),
+    error_logger:info_msg("lookup(~w)~n", [Key]),
     {ok, State};
 handle_event({delete, Key}, State) ->
-    error_logger:info_msg("delete(~w)", [Key]),
+    error_logger:info_msg("delete(~w)~n", [Key]),
     {ok, State};
 handle_event({replace, {Key, Value}}, State) ->
-    error_logger:info_msg("replace(~w, ~w)", [Key, Value]),
+    error_logger:info_msg("replace(~w, ~w)~n", [Key, Value]),
     {ok, State}.
 
 %%--------------------------------------------------------------------
