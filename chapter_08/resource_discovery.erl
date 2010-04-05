@@ -88,7 +88,6 @@ handle_info(_Info, State) ->
     {noreply, State}.
 
 terminate(_Reason, _State) ->
-    sc_store:delete(self()),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->
