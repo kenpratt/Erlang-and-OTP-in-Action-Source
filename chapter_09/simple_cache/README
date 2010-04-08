@@ -3,8 +3,10 @@ To build this code, run the following command:
 erlc -o ./ebin ./src/*.erl
 
 First start one or two contact nodes. Ensure that the default
-node names in sc_app:ensure_contact() match your host name.
-(Edit and recompile if necessary.) For example:
+node names in sc_app:ensure_contact() match your host name, or
+use -sname instead of -name in order to use 'localhost'. (Edit
+and recompile if necessary.) For example, in a separate terminal
+window, do:
 
 erl -name contact1
 
