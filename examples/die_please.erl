@@ -1,33 +1,28 @@
 %%%-------------------------------------------------------------------
-%%% @author Martin Logan <martinjlogan@Macintosh.local>
-%%% @copyright (C) 2008, Martin Logan
+%%% @author Eric Merritt <cyberlync@cyberlync-laptop>
+%%% @copyright (C) 2009, PEAK6 LP
 %%% @doc
-%%%  Stores a single cache element.
+%%%  This is an process that will start up and run for two seconds and
+%%%  then die. Its whole purpose is to die and show the SASL logs output
+%%%  on process death.
 %%% @end
-%%% Created : 14 Dec 2008 by Martin Logan <martinjlogan@Macintosh.local>
+%%% Created :  4 Apr 2009 by Eric Merritt <cyberlync@cyberlync-laptop>
 %%%-------------------------------------------------------------------
--module(sc_element).
+-module(die_please).
 
 -behaviour(gen_server).
 
 %% API
--export([
-         start_link/2,
-         create/1,
-         create/2,
-         fetch/1,
-         replace/2,
-         delete/1
-        ]).
+-export([start_link/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-         terminate/2, code_change/3]).
+	 terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE).
--define(DEFAULT_LEASE_TIME, (60 * 60 * 24)). % 1 day default in seconds
+-define(SLEEP_TIME, 2*1000).
 
--record(state, {value, lease_time, start_time}).
+-record(state, {}).
 
 %%%===================================================================
 %%% API
@@ -37,61 +32,11 @@
 %% @doc
 %% Starts the server
 %%
-%% @spec start_link(Value, LeaseTime) -> {ok, Pid} | ignore | {error, Error}
-%% where
-%%  LeaseTime = integer() | infinity
+%% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link(Value, LeaseTime) ->
-    gen_server:start_link(?MODULE, [Value, LeaseTime], []).
-
-
-%%--------------------------------------------------------------------
-%% @doc
-%%  Create an element in the cache
-%%
-%% @spec create(Value, LeaseTime) -> void()
-%% where
-%%  LeaseTime = integer() | infinity
-%% @end
-%%--------------------------------------------------------------------
-create(Value, LeaseTime) ->
-    sc_element_sup:start_child(Value, LeaseTime).
-
-%% @spec create(Value) -> void()
-%% @equiv create(Value, DefaultLeaseTime)
-create(Value) ->
-    create(Value, ?DEFAULT_LEASE_TIME).
-
-%%--------------------------------------------------------------------
-%% @doc
-%% Fetch an element from the cache.
-%%
-%% @spec fetch(Pid) -> {ok, Value}
-%% @end
-%%--------------------------------------------------------------------
-fetch(Pid) ->
-    gen_server:call(Pid, fetch).
-
-%%--------------------------------------------------------------------
-%% @doc
-%% Replace an element in the cache.
-%%
-%% @spec replace(Value) -> ok | {error, Reason}
-%% @end
-%%--------------------------------------------------------------------
-replace(Pid, Value) ->
-    gen_server:cast(Pid, {replace, Value}).
-
-%%--------------------------------------------------------------------
-%% @doc
-%% Delete an element from the cache.
-%%
-%% @spec delete(Pid) -> ok
-%% @end
-%%--------------------------------------------------------------------
-delete(Pid) ->
-    gen_server:cast(Pid, delete).
+start_link() ->
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -108,14 +53,8 @@ delete(Pid) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([Value, LeaseTime]) ->
-    Now = calendar:local_time(),
-    StartTime = calendar:datetime_to_gregorian_seconds(Now),
-    {ok,
-     #state{value = Value,
-            lease_time = LeaseTime,
-            start_time = StartTime},
-     time_left(StartTime, LeaseTime)}.
+init([]) ->
+    {ok, #state{}, ?SLEEP_TIME}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -131,12 +70,9 @@ init([Value, LeaseTime]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call(fetch, _From,  State) ->
-    #state{value = Value,
-           lease_time = LeaseTime,
-           start_time = StartTime} = State,
-    TimeLeft = time_left(StartTime, LeaseTime),
-    {reply, {ok, Value}, State, TimeLeft}.
+handle_call(_Request, _From, State) ->
+    Reply = ok,
+    {reply, Reply, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -148,14 +84,8 @@ handle_call(fetch, _From,  State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast({replace, Value}, State) ->
-    #state{lease_time = LeaseTime,
-           start_time = StartTime} = State,
-    TimeLeft = time_left(StartTime, LeaseTime),
-    {noreply, State#state{value = Value}, TimeLeft};
-handle_cast(delete, State) ->
-    {stop, normal, State}.
-
+handle_cast(_Msg, State) ->
+    {noreply, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -168,7 +98,8 @@ handle_cast(delete, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_info(timeout, State) ->
-    {stop, normal, State}.
+    i_want_to_die = right_now,
+    {noreply, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -182,7 +113,6 @@ handle_info(timeout, State) ->
 %% @end
 %%--------------------------------------------------------------------
 terminate(_Reason, _State) ->
-    sc_store:delete(self()),
     ok.
 
 %%--------------------------------------------------------------------
@@ -199,13 +129,3 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-time_left(_StartTime, infinity) ->
-    infinity;
-time_left(StartTime, LeaseTime) ->
-    Now = calendar:local_time(),
-    CurrentTime =  calendar:datetime_to_gregorian_seconds(Now),
-    TimeElapsed = CurrentTime - StartTime,
-    case LeaseTime - TimeElapsed of
-        Time when Time =< 0 -> 0;
-        Time                -> Time * 1000
-    end.
