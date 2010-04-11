@@ -6,10 +6,10 @@
 %%% @end
 %%% Created : 16 Sep 2009 by Eric Merritt <cyberlync@cyberlync-laptop>
 %%%-------------------------------------------------------------------
--module(simple_cache_hbase).
+-module(sc_hbase).
 
 %% API
--export([put, get]).
+-export([put/3, get/2, delete/2]).
 
 %%%===================================================================
 %%% API
