@@ -1,5 +1,0 @@
-[{kernel,"2.13.5",[],"/usr/local/erlware/lib/kernel-2.13.5"},
- {stdlib,"1.16.5",[kernel],"/usr/local/erlware/lib/stdlib-1.16.5"},
- {sasl,"2.1.9",[kernel,stdlib],"/usr/local/erlware/lib/sasl-2.1.9"},
- {inets,"5.3",[kernel,stdlib],"/usr/local/erlware/lib/inets-5.3"},
- {eunit,"2.1.5",[stdlib],"/usr/local/erlware/lib/eunit-2.1.5"}].
