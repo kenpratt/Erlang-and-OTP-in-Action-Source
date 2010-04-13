@@ -1,0 +1,97 @@
+<html>
+<head><title>/Users/martinjlogan/book_workspace/code/chapter_11/_build/development/docs/coverage/restful_interface/ri_gws_impl.html</title></head><body bgcolor=white text=black>
+<pre>
+File generated from /Users/martinjlogan/book_workspace/code/chapter_11/_build/development/apps/restful_interface-0.1.0/ebin/../src/ri_gws_impl.erl by COVER 2010-04-13 at 16:47:42
+
+****************************************************************************
+
+        |  %%%-------------------------------------------------------------------
+        |  %%% @doc
+        |  %%%  The callback module that handles all incoming requests at the
+        |  %%%  application level.
+        |  %%% @end
+        |  %%%-------------------------------------------------------------------
+        |  -module(ri_gws_impl).
+        |  
+        |  -behavour(gen_web_server).
+        |  
+        |  %% API
+        |  -export([start_link/1]).
+        |  
+        |  %% Callbacks
+        |  -export([init/1, get/3, delete/3, put/4, post/4]).
+        |  
+        |  %%%===================================================================
+        |  %%% API
+        |  %%%===================================================================
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @doc
+        |  %% Creates a gen_web_server process 
+        |  %%
+        |  %% @spec start_link(SocketManager::pid()) -&gt; {ok, Pid} | ignore | {error, Error}
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  start_link(Port) -&gt;
+<font color=red>     0..|      error_logger:info_msg("startlink on the gws impl~n"),</font>
+<font color=red>     0..|      gen_web_server:start_link(?MODULE, Port, []).</font>
+        |  
+        |  %%%===================================================================
+        |  %%% gen_web_server callbacks
+        |  %%%===================================================================
+        |  %%--------------------------------------------------------------------
+        |  %% @doc Initialize the web serving process
+        |  %% @spec (UserArgs) -&gt; {ok, State}
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  init(_UserArgs) -&gt;
+<font color=red>     0..|      {ok, []}.</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @doc Handles http GET requests
+        |  %% @spec (InitialRequestLine, Head, Body) -&gt; Response
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  get({_, _, {abs_path, [$/|Key]}, _}, _Head, _UserState) -&gt;
+<font color=red>     0..|      error_logger:info_msg("Key ~p~n", [Key]),</font>
+<font color=red>     0..|      case simple_cache:lookup(Key) of</font>
+        |  	{ok, Value} -&gt;
+<font color=red>     0..|  	    Headers = [{"Content-Type", "text/html"}],</font>
+<font color=red>     0..|  	    gen_web_server:http_reply(200, Headers, Value);</font>
+        |  	{error, not_found} -&gt;
+<font color=red>     0..|  	    Headers = [{"Content-Type", "text/html"}],</font>
+<font color=red>     0..|  	    gen_web_server:http_reply(404, Headers, "Content Not Found")</font>
+        |      end.
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @doc Handles http PUT requests
+        |  %% @spec (InitialRequestLine, Head, Body, UserArgs) -&gt; Response
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  put({_, _, {abs_path, [$/|Key]}, _}, _Head, Body, _UserState) -&gt;
+<font color=red>     0..|      simple_cache:insert(Key, Body),</font>
+<font color=red>     0..|      gen_web_server:http_reply(200).</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @doc Handles http DELETE requests
+        |  %% @spec (InitialRequestLine, Head, Body) -&gt; Response
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  delete({_, _, {abs_path, [$/|Key]}, _}, _Head, _UserState) -&gt;
+<font color=red>     0..|      simple_cache:delete(Key),</font>
+<font color=red>     0..|      gen_web_server:http_reply(200).</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @doc Handles http POST requests
+        |  %% @spec (InitialRequestLine, Head, Body, UserArgs) -&gt; Response
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  post({_, _, _, _}, _Head, _Body, _UserState) -&gt;
+<font color=red>     0..|      gen_web_server:http_reply(501).</font>
+        |  
+        |  %%%===================================================================
+        |  %%% Internal functions
+        |  %%%===================================================================
+</pre>
+</body>
+</html>

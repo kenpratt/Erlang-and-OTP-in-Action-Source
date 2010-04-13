@@ -1,25 +1,28 @@
 %%%-------------------------------------------------------------------
-%%% @author Martin Logan <martinjlogan@Macintosh.local>
-%%% @copyright (C) 2009, Martin Logan
-%%% @doc
-%%%  accept tcp connections incomming and service them.
+%%% @author Martin & Eric <erlware-dev@googlegroups.com>
+%%%  [http://www.erlware.org]
+%%% @copyright 2008 Erlware
+%%% @doc This module defines a server process that listens for incoming
+%%%      TCP connections and allows the user to execute commands via
+%%%      that TCP stream 
 %%% @end
-%%% Created : 13 May 2009 by Martin Logan <martinjlogan@Macintosh.local>
 %%%-------------------------------------------------------------------
--module(sc_connection).
+-module(ti_server).
 
 -behaviour(gen_server).
 
 %% API
--export([start_link/1]).
+-export([
+	 start_link/1
+	]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-         terminate/2, code_change/3]).
+	 terminate/2, code_change/3]).
 
--define(SERVER, ?MODULE).
+-define(SERVER, ?MODULE). 
 
--record(state, {lsoc}).
+-record(state, {lsock}).
 
 %%%===================================================================
 %%% API
@@ -29,11 +32,11 @@
 %% @doc
 %% Starts the server
 %%
-%% @spec start_link(LSoc) -> {ok, Pid} | ignore | {error, Error}
+%% @spec start_link(LSock) -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link(LSoc) ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [LSoc], []).
+start_link(LSock) ->
+    gen_server:start_link(?MODULE, [LSock], []).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -50,8 +53,8 @@ start_link(LSoc) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([LSoc]) ->
-    {ok, #state{lsoc = LSoc}, 0}.
+init([LSock]) ->
+    {ok, #state{lsock = LSock}, 0}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -67,9 +70,8 @@ init([LSoc]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call(_Request, _From, State) ->
-    Reply = ok,
-    {reply, Reply, State}.
+handle_call(Msg, _From, State) ->
+    {reply, {ok, Msg}, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -81,8 +83,8 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast(_Msg, State) ->
-    {noreply, State}.
+handle_cast(stop, State) ->
+    {stop, normal, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -94,12 +96,28 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(timeout, #state{lsoc = LSock} = State) ->
-    {ok, _Sock} = gen_tcp:accept(LSock),
-    sc_connection_sup:start_child(),
+handle_info({tcp, Socket, RawData}, State) ->
+    try
+	Result = 
+	    case string:tokens(RawData, "|\r\n") of
+	        [Function, RawArgString] ->
+		    {ok, Toks, _Line} = erl_scan:string(RawArgString ++ ". "),
+		    {ok, Args} = erl_parse:parse_term(Toks),
+		    apply(simple_cache, list_to_atom(Function), Args);
+	        _Error ->
+		    {error, bad_request}
+	end,
+	    gen_tcp:send(Socket,
+		     lists:flatten(io_lib:fwrite("~p~n", [Result])))
+    catch 
+	_C:E ->
+	        gen_tcp:send(Socket,
+		     lists:flatten(io_lib:fwrite("~p~n", [E])))
+    end,
     {noreply, State};
-handle_info({tcp, _Socket, Data}, State) ->
-    io:format("yay got some data ~p~n", [Data]),
+handle_info(timeout, #state{lsock = LSock} = State) ->
+    {ok, _Sock} = gen_tcp:accept(LSock),
+    ti_sup:start_child(),
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -130,3 +148,4 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+

@@ -1,0 +1,75 @@
+<html>
+<head><title>/Users/martinjlogan/book_workspace/code/chapter_11/_build/development/docs/coverage/resource_discovery/resource_discovery.html</title></head><body bgcolor=white text=black>
+<pre>
+File generated from /Users/martinjlogan/book_workspace/code/chapter_11/_build/development/apps/resource_discovery-0.1.0/ebin/../src/resource_discovery.erl by COVER 2010-04-13 at 16:47:42
+
+****************************************************************************
+
+        |  %%%-------------------------------------------------------------------
+        |  %%% @author Martin Logan &lt;martinjlogan@Macintosh.local&gt;
+        |  %%% @copyright (C) 2009, Martin Logan
+        |  %%% @doc
+        |  %%%  The api for the resource discovery system.
+        |  %%% @end
+        |  %%% Created : 23 Apr 2009 by Martin Logan &lt;martinjlogan@Macintosh.local&gt;
+        |  %%%-------------------------------------------------------------------
+        |  -module(resource_discovery).
+        |  
+        |  -export([
+        |  	 add_local_resource/2,
+        |  	 add_target_resource_type/1,
+        |  	 fetch_resources/1,
+        |  	 delete_resource/2,
+        |  	 trade_resources/0
+        |  	]).
+        |  
+        |  %%%===================================================================
+        |  %%% API
+        |  %%%===================================================================
+        |  
+        |  %%-------------------------------------------------------------------
+        |  %% @doc Add a resource that is present on the local node that a
+        |  %%      remote service will want to consume.
+        |  %% @spec (Type::resource_type(), ResourceInstance::resource_instance()) -&gt; ok
+        |  %% @end
+        |  %%-------------------------------------------------------------------
+        |  add_local_resource(Type, Instance) -&gt;
+<font color=red>     0..|      rd_server:add_local_resource(Type, Instance).</font>
+        |  
+        |  %%-------------------------------------------------------------------
+        |  %% @doc Add a type of resource that you wish to cache any remote
+        |  %%      instances of.
+        |  %% @spec (Type::resource_type()) -&gt; ok
+        |  %% @end
+        |  %%-------------------------------------------------------------------
+        |  add_target_resource_type(Type) -&gt;
+<font color=red>     0..|      rd_server:add_target_resource_type(Type).</font>
+        |  
+        |  %%-------------------------------------------------------------------
+        |  %% @doc Fetch all the resources for a particular resource instance
+        |  %%      type.
+        |  %% @spec (Type::resource_type()) -&gt; {ok, [Instance::resource_instance]} | error
+        |  %% @end
+        |  %%-------------------------------------------------------------------
+        |  fetch_resources(Type) -&gt;
+<font color=red>     0..|      rd_server:fetch_resources(Type).</font>
+        |  
+        |  %%-------------------------------------------------------------------
+        |  %% @doc Delete a particular resource instance for a particular
+        |  %%      resource type.
+        |  %% @spec (Type::resource_type(), Instance::resource_instance()) -&gt; ok
+        |  %% @end
+        |  %%-------------------------------------------------------------------
+        |  delete_resource(Type, Instance) -&gt;
+<font color=red>     0..|      rd_server:delete_resource(Type, Instance).</font>
+        |  
+        |  %%-------------------------------------------------------------------
+        |  %% @doc trade resources with all remote nodes
+        |  %% @spec () -&gt; ok
+        |  %% @end
+        |  %%-------------------------------------------------------------------
+        |  trade_resources() -&gt;
+<font color=red>     0..|      rd_server:trade_resources().</font>
+</pre>
+</body>
+</html>

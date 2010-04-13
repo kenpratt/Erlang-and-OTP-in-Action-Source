@@ -1,0 +1,82 @@
+<html>
+<head><title>/Users/martinjlogan/book_workspace/code/chapter_11/_build/development/docs/coverage/resource_discovery/rd_sup.html</title></head><body bgcolor=white text=black>
+<pre>
+File generated from /Users/martinjlogan/book_workspace/code/chapter_11/_build/development/apps/resource_discovery-0.1.0/ebin/../src/rd_sup.erl by COVER 2010-04-13 at 16:47:42
+
+****************************************************************************
+
+        |  %%%-------------------------------------------------------------------
+        |  %%% @author Martin Logan &lt;martinjlogan@Macintosh.local&gt;
+        |  %%% @copyright (C) 2009, Martin Logan
+        |  %%% @doc
+        |  %%% @end
+        |  %%% Created : 11 Jan 2009 by Martin Logan &lt;martinjlogan@Macintosh.local&gt;
+        |  %%%-------------------------------------------------------------------
+        |  -module(rd_sup).
+        |  
+        |  -behaviour(supervisor).
+        |  
+        |  %% API
+        |  -export([
+        |  	 start_link/0
+        |  	]).
+        |  
+        |  %% Supervisor callbacks
+        |  -export([init/1]).
+        |  
+        |  -define(SERVER, ?MODULE).
+        |  
+        |  %%%===================================================================
+        |  %%% API functions
+        |  %%%===================================================================
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @doc
+        |  %% Starts the supervisor
+        |  %%
+        |  %% @spec start_link() -&gt; {ok, Pid} | ignore | {error, Error}
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  start_link() -&gt;
+<font color=red>     0..|      supervisor:start_link({local, ?SERVER}, ?MODULE, []).</font>
+        |  
+        |  %%%===================================================================
+        |  %%% Supervisor callbacks
+        |  %%%===================================================================
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @private
+        |  %% @doc
+        |  %% Whenever a supervisor is started using supervisor:start_link/[2,3],
+        |  %% this function is called by the new process to find out about
+        |  %% restart strategy, maximum restart frequency and child
+        |  %% specifications.
+        |  %%
+        |  %% @spec init(Args) -&gt; {ok, {SupFlags, [ChildSpec]}} |
+        |  %%                     ignore |
+        |  %%                     {error, Reason}
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  init([]) -&gt;
+<font color=red>     0..|      RestartStrategy           = one_for_one,</font>
+<font color=red>     0..|      MaxRestarts               = 1000,</font>
+<font color=red>     0..|      MaxSecondsBetweenRestarts = 3600,</font>
+        |  
+<font color=red>     0..|      SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},</font>
+        |  
+<font color=red>     0..|      Restart  = permanent,</font>
+<font color=red>     0..|      Shutdown = brutal_kill,</font>
+<font color=red>     0..|      Type     = worker,</font>
+        |  
+<font color=red>     0..|      ResourceDiscovery = {rd_server,</font>
+        |  			 {rd_server, start_link, []},
+        |  			 Restart, Shutdown, Type, [rd_server]},
+        |  
+<font color=red>     0..|      {ok, {SupFlags, [ResourceDiscovery]}}.</font>
+        |  
+        |  %%%===================================================================
+        |  %%% Internal functions
+        |  %%%===================================================================
+</pre>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<html>
+<head><title>/Users/martinjlogan/book_workspace/code/chapter_11/_build/development/docs/coverage/simple_cache/sc_app.html</title></head><body bgcolor=white text=black>
+<pre>
+File generated from /Users/martinjlogan/book_workspace/code/chapter_11/_build/development/apps/simple_cache-0.1.0.3/ebin/../src/sc_app.erl by COVER 2010-04-13 at 16:47:42
+
+****************************************************************************
+
+        |  %%%----------------------------------------------------------------
+        |  %%% @author Martin Logan & Eric Merritt &lt;contact@erlware.org&gt;
+        |  %%% @doc
+        |  %%%
+        |  %%% @end
+        |  %%% @copyright 2008 Martin Logan & Eric Merritt
+        |  %%%----------------------------------------------------------------,
+        |  -module(sc_app).
+        |  
+        |  -behaviour(application).
+        |  
+        |  %% Application callbacks
+        |  -export([start/2, stop/1]).
+        |  
+        |  -define(WAIT_FOR_RESOURCES, 5000).
+        |  
+        |  %%%===================================================================
+        |  %%% Application callbacks
+        |  %%%===================================================================
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @private
+        |  %% @doc
+        |  %% This function is called whenever an application is started using
+        |  %% application:start/[1,2], and should start the processes of the
+        |  %% application. If the application is structured according to the OTP
+        |  %% design principles as a supervision tree, this means starting the
+        |  %% top supervisor of the tree.
+        |  %%
+        |  %% @spec start(StartType, StartArgs) -&gt; {ok, Pid} |
+        |  %%                                      {ok, Pid, State} |
+        |  %%                                      {error, Reason}
+        |  %%      StartType = normal | {takeover, Node} | {failover, Node}
+        |  %%      StartArgs = term()
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  start(_StartType, _StartArgs) -&gt;
+<font color=red>     0..|      ensure_contact(),</font>
+<font color=red>     0..|      resource_discovery:add_local_resource(simple_cache, node()),</font>
+<font color=red>     0..|      resource_discovery:add_target_resource_type(simple_cache),</font>
+<font color=red>     0..|      resource_discovery:trade_resources(),</font>
+<font color=red>     0..|      timer:sleep(?WAIT_FOR_RESOURCES),</font>
+<font color=red>     0..|      sc_store:init(),</font>
+<font color=red>     0..|      case sc_sup:start_link() of</font>
+        |          {ok, Pid} -&gt;
+<font color=red>     0..|  	    sc_event_logger:add_handler(),</font>
+<font color=red>     0..|              {ok, Pid};</font>
+        |          Error -&gt;
+<font color=red>     0..|              Error</font>
+        |      end.
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @private
+        |  %% @doc
+        |  %% This function is called whenever an application has stopped. It
+        |  %% is intended to be the opposite of Module:start/2 and should do
+        |  %% any necessary cleaning up. The return value is ignored.
+        |  %%
+        |  %% @spec stop(State) -&gt; void()
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  stop(_State) -&gt;
+<font color=red>     0..|      ok.</font>
+        |  
+        |  %%%===================================================================
+        |  %%% Internal functions
+        |  %%%===================================================================
+        |  ensure_contact() -&gt;
+<font color=red>     0..|      case get_env(simple_cache, contact_nodes, []) of</font>
+        |  	{ok, []} -&gt;
+<font color=red>     0..|  	    error_logger:info_msg("no contact nodes~n");</font>
+        |  	{ok, ContactNodes} -&gt;
+<font color=red>     0..|  	    ok = ensure_contact(ContactNodes),</font>
+<font color=red>     0..|  	    {ok, WaitTime} = get_env(simple_cache, wait_time, 6000),</font>
+<font color=red>     0..|  	    wait_for_nodes(ContactNodes, WaitTime)</font>
+        |      end.
+        |  
+        |  ensure_contact([Node|T]) -&gt;
+<font color=red>     0..|      case net_adm:ping(Node) of</font>
+        |  	pong -&gt;
+<font color=red>     0..|  	    lists:foreach(fun(N) -&gt; net_adm:ping(N) end, T);</font>
+        |  	pang -&gt;
+<font color=red>     0..|  	    ensure_contact(T)</font>
+        |      end;
+        |  ensure_contact([]) -&gt;
+<font color=red>     0..|      {error, no_contact_nodes_reachable}.</font>
+        |  			 
+        |  wait_for_nodes(ContactNodes, WaitTime) -&gt;    
+<font color=red>     0..|      wait_for_nodes(ContactNodes, round(WaitTime / 3), 3).</font>
+        |  
+        |  wait_for_nodes(_, _, 0) -&gt;
+<font color=red>     0..|      ok;</font>
+        |  wait_for_nodes(ContactNodes, WaitSlice, Iterations) -&gt;    
+<font color=red>     0..|      case length(nodes()) &gt; length(ContactNodes) of </font>
+        |  	true -&gt;
+<font color=red>     0..|  	    ok;</font>
+        |  	false -&gt; 
+<font color=red>     0..|  	    timer:sleep(WaitSlice),</font>
+<font color=red>     0..|  	    wait_for_nodes(ContactNodes, WaitSlice, Iterations - 1)</font>
+        |      end.
+        |  
+        |  get_env(AppName, Key, Default) -&gt;
+<font color=red>     0..|      case application:get_env(AppName, Key) of</font>
+<font color=red>     0..|  	undefined -&gt; {ok, Default};</font>
+<font color=red>     0..|  	Found     -&gt; Found</font>
+        |      end.
+        |  	    
+</pre>
+</body>
+</html>

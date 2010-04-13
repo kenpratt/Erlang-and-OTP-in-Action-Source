@@ -1,0 +1,98 @@
+<html>
+<head><title>/Users/martinjlogan/book_workspace/code/chapter_11/_build/development/docs/coverage/simple_cache/sc_event.html</title></head><body bgcolor=white text=black>
+<pre>
+File generated from /Users/martinjlogan/book_workspace/code/chapter_11/_build/development/apps/simple_cache-0.1.0.3/ebin/../src/sc_event.erl by COVER 2010-04-13 at 16:47:43
+
+****************************************************************************
+
+        |  %% -*- mode: Erlang; fill-column: 132; comment-column: 118; -*-
+        |  %%%---------------------------------------------------------------------------
+        |  %%% @author Eric Merritt &lt;cyberlync@gmail.com&gt;
+        |  %%% @doc
+        |  %%%  Provides a nice interface to the eventing system.
+        |  %%% @end
+        |  %%% @copyright (C) 2009, Erlware
+        |  %%%-------------------------------------------------------------------
+        |  -module(sc_event).
+        |  
+        |  %% API
+        |  -export([start_link/0,
+        |           lookup/1,
+        |           create/2,
+        |  	 replace/2,
+        |           delete/1,
+        |           delete_handler/2,
+        |           add_handler/2]).
+        |  
+        |  -define(SERVER, ?MODULE).
+        |  
+        |  
+        |  %%====================================================================
+        |  %% API
+        |  %%====================================================================
+        |  %%--------------------------------------------------------------------
+        |  %% @doc
+        |  %%  Starts the gen_event with the sc_event name.
+        |  %% @spec () -&gt; ok
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  start_link() -&gt;
+<font color=red>     0..|      gen_event:start_link({local, ?SERVER}).</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @doc
+        |  %%  Event fired when a new element is inserted
+        |  %% @spec (Key, Value) -&gt; ok
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  create(Key, Value) -&gt;
+<font color=red>     0..|      gen_event:notify(?SERVER, {create, {Key, Value}}).</font>
+        |  
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @doc
+        |  %%  Event fired when a key is looked up
+        |  %% @spec (Key) -&gt; ok
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  lookup(Key) -&gt;
+<font color=red>     0..|      gen_event:notify(?SERVER, {lookup, Key}).</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @doc
+        |  %%  Event fired when a key is deleted
+        |  %% @spec (Key) -&gt; ok
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  delete(Key) -&gt;
+<font color=red>     0..|      gen_event:notify(?SERVER, {delete, Key}).</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @doc
+        |  %%  Event fired when a key is replaced
+        |  %% @spec (Key, Value) -&gt; ok
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  replace(Key, Value) -&gt;
+<font color=red>     0..|      gen_event:notify(?SERVER, {replace, {Key, Value}}).</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @doc
+        |  %% Add a handler for this event system.
+        |  %% @spec (Handler, Args) -&gt; ok
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  add_handler(Handler, Args) -&gt;
+<font color=red>     0..|      gen_event:add_handler(?SERVER, Handler, Args).</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @doc
+        |  %% Delete a handler for this event system.
+        |  %% @spec (Handler, Args) -&gt; ok
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  delete_handler(Handler, Args) -&gt;
+<font color=red>     0..|      gen_event:delete_handler(?SERVER, Handler, Args).</font>
+</pre>
+</body>
+</html>
