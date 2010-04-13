@@ -1,0 +1,117 @@
+<html>
+<head><title>/Users/martinjlogan/book_workspace/code/chapter_11/_build/development/docs/coverage/simple_cache/sc_store.html</title></head><body bgcolor=white text=black>
+<pre>
+File generated from /Users/martinjlogan/book_workspace/code/chapter_11/_build/development/apps/simple_cache-0.1.0.3/ebin/../src/sc_store.erl by COVER 2010-04-13 at 16:47:42
+
+****************************************************************************
+
+        |  %%%-------------------------------------------------------------------
+        |  %%% @author Martin Logan &lt;martinjlogan@Macintosh.local&gt;
+        |  %%% @copyright (C) 2009, Martin Logan
+        |  %%% @doc
+        |  %%%  holds assorted storage functions for our cache
+        |  %%% @end
+        |  %%% Created : 11 Jan 2009 by Martin Logan &lt;martinjlogan@Macintosh.local&gt;
+        |  %%%-------------------------------------------------------------------
+        |  -module(sc_store).
+        |  
+        |  %% API
+        |  -export([
+        |  	 init/0,
+        |  	 insert/2,
+        |  	 delete/1,
+        |  	 lookup/1
+        |  	]).
+        |  
+        |  -record(key_to_pid, {key, pid}).
+        |  
+        |  -define(TABLE_ID, ?MODULE).
+        |  -define(WAIT_FOR_TABLES, 10000).
+        |  
+        |  %%%===================================================================
+        |  %%% API
+        |  %%%===================================================================
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @doc This initializes the registrar.
+        |  %% @spec init() -&gt; void()
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  init() -&gt;
+<font color=red>     0..|      {ok, CacheNodes} = resource_discovery:fetch_resources(simple_cache),</font>
+<font color=red>     0..|      dynamic_db_init(lists:delete(node(), CacheNodes)).</font>
+        |      
+        |  %%--------------------------------------------------------------------
+        |  %% @doc Delete an element by pid from the registrar.
+        |  %% @spec delete(Pid) -&gt; void()
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  delete(Pid) -&gt;
+<font color=red>     0..|      try</font>
+<font color=red>     0..|  	[#key_to_pid{} = Record] = mnesia:dirty_index_read(key_to_pid, Pid, #key_to_pid.pid),</font>
+<font color=red>     0..|  	mnesia:dirty_delete_object(Record)</font>
+        |      catch 
+<font color=red>     0..|  	_C:_E -&gt; ok</font>
+        |      end.
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @doc Find a pid given a key.
+        |  %% @spec lookup(Key) -&gt; {ok, Pid} | {error, not_found}
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  lookup(Key) -&gt;
+<font color=red>     0..|      Fun = fun() -&gt;</font>
+<font color=red>     0..|  		  [{key_to_pid, Key, Pid}] = mnesia:read(key_to_pid, Key),</font>
+<font color=red>     0..|  		  Pid</font>
+        |  	  end,
+<font color=red>     0..|      case mnesia:transaction(Fun) of</font>
+<font color=red>     0..|  	{atomic, Pid}      -&gt; {ok, Pid};</font>
+<font color=red>     0..|  	{aborted, _Reason} -&gt; {error, not_found}</font>
+        |      end.
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @doc Insert a key and pid.
+        |  %% @spec insert(Key, Pid) -&gt; void()
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  insert(Key, Pid) when is_pid(Pid) -&gt;
+<font color=red>     0..|      Fun = fun() -&gt; mnesia:write(#key_to_pid{key = Key, pid = Pid}) end,</font>
+<font color=red>     0..|      {atomic, _} = mnesia:transaction(Fun). </font>
+        |  
+        |  %%%===================================================================
+        |  %%% Internal functions
+        |  %%%===================================================================
+        |  
+        |  dynamic_db_init([]) -&gt;
+<font color=red>     0..|      delete_schema(),</font>
+<font color=red>     0..|      mnesia:create_schema([node()]),</font>
+<font color=red>     0..|      mnesia:create_table(key_to_pid, [{index, [pid]}, {attributes, record_info(fields, key_to_pid)}]);</font>
+        |  dynamic_db_init(CacheNodes) -&gt;
+<font color=red>     0..|      delete_schema(),</font>
+<font color=red>     0..|      mnesia:create_schema([node()]),</font>
+<font color=red>     0..|      add_extra_nodes(CacheNodes).</font>
+        |  
+        |  %% deletes a local schema.
+        |  delete_schema() -&gt;
+<font color=red>     0..|      mnesia:stop(),</font>
+<font color=red>     0..|      mnesia:delete_schema([node()]),</font>
+<font color=red>     0..|      mnesia:start().</font>
+        |  
+        |  add_extra_nodes([Node|T]) -&gt;
+<font color=red>     0..|      case mnesia:change_config(extra_db_nodes, [Node]) of</font>
+        |          {ok, [Node]} -&gt; 
+<font color=red>     0..|              Res = mnesia:add_table_copy(schema, node(), ram_copies),</font>
+<font color=red>     0..|              error_logger:info_msg("remote_init schema type ~p~n", [Res]),</font>
+        |  
+<font color=red>     0..|  	    Res1 = mnesia:add_table_copy(key_to_pid, node(), ram_copies),</font>
+<font color=red>     0..|  	    error_logger:info_msg("remote_init add_table copy = ~p~n", [Res1]),</font>
+        |  
+<font color=red>     0..|              Tables = mnesia:system_info(tables),</font>
+<font color=red>     0..|              mnesia:wait_for_tables(Tables, ?WAIT_FOR_TABLES);</font>
+        |          _ -&gt; 
+<font color=red>     0..|              add_extra_nodes(T)</font>
+        |      end.
+        |      
+</pre>
+</body>
+</html>

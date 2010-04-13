@@ -1,0 +1,256 @@
+<html>
+<head><title>/Users/martinjlogan/book_workspace/code/chapter_11/_build/development/docs/coverage/resource_discovery/rd_server.html</title></head><body bgcolor=white text=black>
+<pre>
+File generated from /Users/martinjlogan/book_workspace/code/chapter_11/_build/development/apps/resource_discovery-0.1.0/ebin/../src/rd_server.erl by COVER 2010-04-13 at 16:47:42
+
+****************************************************************************
+
+        |  %%%-------------------------------------------------------------------
+        |  %%% @author Martin Logan &lt;martinjlogan@gmail.com&gt;
+        |  %%% @copyright (C) 2009, Martin Logan
+        |  %%% @doc A very simple resource discovery system.
+        |  %%% List of terms and types:
+        |  %%%
+        |  %%% @type resource() = {resource_type(), resource_instance()}. The type of a resource followed by its identifier. Local
+        |  %%%       resources are communicated to other resource discovery instances and cached by those how have the
+        |  %%%       local resource type set as a target type. 
+        |  %%% @type resource_type() = atom(). The name of a resource, how it is identified. For example
+        |  %%%       a type of service that you have on the network may be identified by it's node name
+        |  %%%       in which case you might have a resource type of 'my_service' of which there may be
+        |  %%%       many node names representing resources such as {my_service, myservicenode@myhost}. 
+        |  %%% @type resource_instance() =  pid(). The resource being managed.
+        |  %%%
+        |  %%% @end
+        |  %%% Created : 21 Feb 2009 by Martin Logan &lt;martinjlogan@Macintosh.local&gt;
+        |  %%%-------------------------------------------------------------------
+        |  -module(rd_server).
+        |  
+        |  -behaviour(gen_server).
+        |  
+        |  %% API
+        |  -export([
+        |  	 start_link/0,
+        |  	 add_local_resource/2,
+        |  	 add_target_resource_type/1,
+        |  	 fetch_resources/1,
+        |  	 delete_resource/2,
+        |  	 trade_resources/0
+        |  	]).
+        |  
+        |  %% gen_server callbacks
+        |  -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
+        |  	 terminate/2, code_change/3]).
+        |  
+        |  -define(SERVER, ?MODULE). 
+        |  
+        |  -record(state, {local_resources, target_resource_types, resources}).
+        |  
+        |  %%%===================================================================
+        |  %%% API
+        |  %%%===================================================================
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @doc
+        |  %% Starts the server
+        |  %%
+        |  %% @spec start_link() -&gt; {ok, Pid} | ignore | {error, Error}
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  start_link() -&gt;
+<font color=red>     0..|      gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).</font>
+        |  
+        |  %%-------------------------------------------------------------------
+        |  %% @doc Add a resource that is present on the local node that a
+        |  %%      remote service will want to consume.
+        |  %% @spec (Type::resource_type(), ResourceInstance::resource_instance()) -&gt; ok
+        |  %% @end
+        |  %%-------------------------------------------------------------------
+        |  add_local_resource(Type, Instance) -&gt;
+<font color=red>     0..|      gen_server:cast(?SERVER, {add_local_resource, {Type, Instance}}).</font>
+        |  
+        |  %%-------------------------------------------------------------------
+        |  %% @doc Add a type of resource that you wish to cache any remote
+        |  %%      instances of.
+        |  %% @spec (Type::resource_type()) -&gt; ok
+        |  %% @end
+        |  %%-------------------------------------------------------------------
+        |  add_target_resource_type(Type) -&gt;
+<font color=red>     0..|      gen_server:cast(?SERVER, {add_target_resource_type, Type}).</font>
+        |  
+        |  %%-------------------------------------------------------------------
+        |  %% @doc Fetch all the resources for a particular resource instance
+        |  %%      type.
+        |  %% @spec (Type::resource_type()) -&gt; {ok, [Instance::resource_instance]} | error
+        |  %% @end
+        |  %%-------------------------------------------------------------------
+        |  fetch_resources(Type) -&gt;
+<font color=red>     0..|      gen_server:call(?SERVER, {fetch_resources, Type}).</font>
+        |  
+        |  %%-------------------------------------------------------------------
+        |  %% @doc Delete a particular resource instance for a particular
+        |  %%      resource type.
+        |  %% @spec (Type::resource_type(), Instance::resource_instance()) -&gt; ok
+        |  %% @end
+        |  %%-------------------------------------------------------------------
+        |  delete_resource(Type, Instance) -&gt;
+<font color=red>     0..|      gen_server:cast(?SERVER, {delete_resource, {Type, Instance}}).</font>
+        |  
+        |  %%-------------------------------------------------------------------
+        |  %% @doc trade resources with all remote nodes
+        |  %% @spec () -&gt; ok
+        |  %% @end
+        |  %%-------------------------------------------------------------------
+        |  trade_resources() -&gt;
+<font color=red>     0..|      gen_server:cast(?SERVER, trade_resources).</font>
+        |  
+        |  %%%===================================================================
+        |  %%% gen_server callbacks
+        |  %%%===================================================================
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @private
+        |  %% @doc
+        |  %% Initiates the server
+        |  %%
+        |  %% @spec init(Args) -&gt; {ok, State} |
+        |  %%                     {ok, State, Timeout} |
+        |  %%                     ignore |
+        |  %%                     {stop, Reason}
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  init([]) -&gt;
+<font color=red>     0..|      {ok, #state{resources = dict:new(), target_resource_types = [], local_resources = dict:new()}}.</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @private
+        |  %% @doc
+        |  %% Handling call messages
+        |  %%
+        |  %% @spec handle_call(Request, From, State) -&gt;
+        |  %%                                   {reply, Reply, State} |
+        |  %%                                   {reply, Reply, State, Timeout} |
+        |  %%                                   {noreply, State} |
+        |  %%                                   {noreply, State, Timeout} |
+        |  %%                                   {stop, Reason, Reply, State} |
+        |  %%                                   {stop, Reason, State}
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  handle_call({fetch_resources, Type}, _From, State) -&gt;
+<font color=red>     0..|      {reply, dict:find(Type, State#state.resources), State}.</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @private
+        |  %% @doc
+        |  %% Handling cast messages
+        |  %%
+        |  %% @spec handle_cast(Msg, State) -&gt; {noreply, State} |
+        |  %%                                  {noreply, State, Timeout} |
+        |  %%                                  {stop, Reason, State}
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  handle_cast(trade_resources, #state{local_resources = LocalResources} = State) -&gt;
+<font color=red>     0..|      error_logger:info_msg("trade resources~p~n", [LocalResources]),</font>
+<font color=red>     0..|      lists:foreach(fun(Node) -&gt;</font>
+<font color=red>     0..|  			  gen_server:cast({?SERVER, Node}, {trade_resources, {node(), LocalResources}})</font>
+        |  		  end,
+        |  		  [node()|nodes()]),
+<font color=red>     0..|      {noreply, State};</font>
+        |  handle_cast({trade_resources, {ReplyToken, RemoteResources}}, State) -&gt;
+<font color=red>     0..|      error_logger:info_msg("trade resources~p~n", [{ReplyToken, RemoteResources}]),</font>
+<font color=red>     0..|      #state{local_resources = LocalResources, target_resource_types = TargetTypes, resources = Resources} = State,</font>
+<font color=red>     0..|      ResourceList = return_resources_for_types(TargetTypes, RemoteResources),</font>
+<font color=red>     0..|      NewResources = add_resources(ResourceList, Resources),</font>
+<font color=red>     0..|      case ReplyToken of</font>
+        |  	noreply -&gt;
+<font color=red>     0..|  	    ok;</font>
+        |  	ReplyToken -&gt;
+<font color=red>     0..|  	    gen_server:cast({?SERVER, ReplyToken}, {trade_resources, {noreply, LocalResources}})</font>
+        |      end,
+<font color=red>     0..|      {noreply, State#state{resources = NewResources}};</font>
+        |  
+        |  handle_cast({add_local_resource, {Type, Instance}}, #state{local_resources = LocalResources} = State) -&gt;
+<font color=red>     0..|      error_logger:info_msg("add local resource ~p~n", [{Type, Instance}]),</font>
+<font color=red>     0..|      {noreply, State#state{local_resources = add_resource(Type, Instance, LocalResources)}};</font>
+        |  handle_cast({add_target_resource_type, Type}, #state{target_resource_types = TargetTypes} = State) -&gt;
+<font color=red>     0..|      {noreply, State#state{target_resource_types = [Type|lists:delete(Type, TargetTypes)]}};</font>
+        |  handle_cast({delete_resource, {Type, Instance}}, #state{resources = Resources} = State) -&gt;
+<font color=red>     0..|      {noreply, State#state{resources = delete_resource(Type, Instance, Resources)}}.</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @private
+        |  %% @doc
+        |  %% Handling all non call/cast messages
+        |  %%
+        |  %% @spec handle_info(Info, State) -&gt; {noreply, State} |
+        |  %%                                   {noreply, State, Timeout} |
+        |  %%                                   {stop, Reason, State}
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  handle_info(_Info, State) -&gt;
+<font color=red>     0..|      {noreply, State}.</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @private
+        |  %% @doc
+        |  %% This function is called by a gen_server when it is about to
+        |  %% terminate. It should be the opposite of Module:init/1 and do any
+        |  %% necessary cleaning up. When it returns, the gen_server terminates
+        |  %% with Reason. The return value is ignored.
+        |  %%
+        |  %% @spec terminate(Reason, State) -&gt; void()
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  terminate(_Reason, _State) -&gt;
+<font color=red>     0..|      ok.</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @private
+        |  %% @doc
+        |  %% Convert process state when code is changed
+        |  %%
+        |  %% @spec code_change(OldVsn, State, Extra) -&gt; {ok, NewState}
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  code_change(_OldVsn, State, _Extra) -&gt;
+<font color=red>     0..|      {ok, State}.</font>
+        |  
+        |  %%%===================================================================
+        |  %%% Internal functions
+        |  %%%===================================================================
+        |  add_resources([{Type, Identifier}|T], Dict) -&gt;
+<font color=red>     0..|      add_resources(T, add_resource(Type, Identifier, Dict));</font>
+        |  add_resources([], Dict) -&gt;
+<font color=red>     0..|      Dict.</font>
+        |  
+        |  add_resource(Type, Identifier, Dict) -&gt;
+<font color=red>     0..|      io:format("store ~p ~p in ~p~n", [Type, Identifier, Dict]),</font>
+<font color=red>     0..|      case dict:find(Type, Dict) of</font>
+        |  	{ok, ResourceList} -&gt;
+<font color=red>     0..|  	    dict:store(Type, [Identifier|lists:delete(Identifier, ResourceList)], Dict);</font>
+        |  	error -&gt;
+<font color=red>     0..|  	    dict:store(Type, [Identifier], Dict)</font>
+        |      end.
+        |  	    
+        |  
+        |  delete_resource(Type, Identifier, Dict) -&gt;
+<font color=red>     0..|      case dict:find(Type, Dict) of</font>
+        |  	{ok, [Identifier]} -&gt;
+<font color=red>     0..|  	    dict:erase(Type, Dict);</font>
+        |  	{ok, ResourceList} -&gt;
+<font color=red>     0..|  	    dict:store(Type, lists:delete(Identifier, ResourceList), Dict);</font>
+        |  	error -&gt;
+<font color=red>     0..|  	    Dict</font>
+        |      end.
+        |      
+        |  return_resources_for_types(Types, Resources) -&gt;
+<font color=red>     0..|      Fun = </font>
+        |  	fun(Type, Acc) -&gt;
+<font color=red>     0..|  		case dict:find(Type, Resources) of</font>
+<font color=red>     0..|  		    {ok, List}  -&gt; [{Type, Instance} || Instance &lt;- List] ++ Acc;</font>
+<font color=red>     0..|  		    error       -&gt; Acc</font>
+        |  		end
+        |  	end,
+<font color=red>     0..|      lists:foldl(Fun, [], Types).</font>
+</pre>
+</body>
+</html>

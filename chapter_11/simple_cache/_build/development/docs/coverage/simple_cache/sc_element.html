@@ -1,0 +1,185 @@
+<html>
+<head><title>/Users/martinjlogan/book_workspace/code/chapter_11/_build/development/docs/coverage/simple_cache/sc_element.html</title></head><body bgcolor=white text=black>
+<pre>
+File generated from /Users/martinjlogan/book_workspace/code/chapter_11/_build/development/apps/simple_cache-0.1.0.3/ebin/../src/sc_element.erl by COVER 2010-04-13 at 16:47:43
+
+****************************************************************************
+
+        |  %%%-------------------------------------------------------------------
+        |  %%% @author Martin Logan &lt;martinjlogan@Macintosh.local&gt;
+        |  %%% @copyright (C) 2008, Martin Logan
+        |  %%% @doc
+        |  %%%  Stores a single cache element.
+        |  %%% @end
+        |  %%% Created : 14 Dec 2008 by Martin Logan &lt;martinjlogan@Macintosh.local&gt;
+        |  %%%-------------------------------------------------------------------
+        |  -module(sc_element).
+        |  
+        |  -behaviour(gen_server).
+        |  
+        |  %% API
+        |  -export([
+        |  	 start_link/1,
+        |  	 create/1,
+        |  	 fetch/1,
+        |  	 replace/2,
+        |  	 delete/1
+        |  	]).
+        |  
+        |  %% gen_server callbacks
+        |  -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
+        |  	 terminate/2, code_change/3]).
+        |  
+        |  -define(SERVER, ?MODULE).
+        |  
+        |  -record(state, {value}).
+        |  
+        |  %%%===================================================================
+        |  %%% API
+        |  %%%===================================================================
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @doc
+        |  %% Starts the server
+        |  %%
+        |  %% @spec start_link(Value) -&gt; {ok, Pid} | ignore | {error, Error}
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  start_link(Value) -&gt;
+<font color=red>     0..|      gen_server:start_link(?MODULE, [Value], []).</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @doc
+        |  %%  Create an element in the cache
+        |  %%
+        |  %% @spec create(Value) -&gt; void()
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  create(Value) -&gt;
+<font color=red>     0..|      sc_element_sup:start_child(Value).</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @doc
+        |  %% Fetch an element from the cache.
+        |  %%
+        |  %% @spec fetch(Pid) -&gt; {ok, Value} | {error, Reason}
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  fetch(Pid) -&gt;
+<font color=red>     0..|      gen_server:call(Pid, fetch).</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @doc
+        |  %% Replace an element in the cache.
+        |  %%
+        |  %% @spec replace(Pid, Value) -&gt; ok | {error, Reason}
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  replace(Pid, Value) -&gt;
+<font color=red>     0..|      gen_server:cast(Pid, {replace, Value}).</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @doc
+        |  %% Delete an element from the cache.
+        |  %%
+        |  %% @spec delete(Pid) -&gt; ok
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  delete(Pid) -&gt;
+<font color=red>     0..|      gen_server:cast(Pid, delete).</font>
+        |  
+        |  %%%===================================================================
+        |  %%% gen_server callbacks
+        |  %%%===================================================================
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @private
+        |  %% @doc
+        |  %% Initiates the server
+        |  %%
+        |  %% @spec init(Args) -&gt; {ok, State} |
+        |  %%                     {ok, State, Timeout} |
+        |  %%                     ignore |
+        |  %%                     {stop, Reason}
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  init([Value]) -&gt;
+<font color=red>     0..|      {ok, #state{value = Value}}.</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @private
+        |  %% @doc
+        |  %% Handling call messages
+        |  %%
+        |  %% @spec handle_call(Request, From, State) -&gt;
+        |  %%                                   {reply, Reply, State} |
+        |  %%                                   {reply, Reply, State, Timeout} |
+        |  %%                                   {noreply, State} |
+        |  %%                                   {noreply, State, Timeout} |
+        |  %%                                   {stop, Reason, Reply, State} |
+        |  %%                                   {stop, Reason, State}
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  handle_call(fetch, _From, #state{value = Value} = State) -&gt;
+<font color=red>     0..|      {reply, {ok, Value}, State}.</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @private
+        |  %% @doc
+        |  %% Handling cast messages
+        |  %%
+        |  %% @spec handle_cast(Msg, State) -&gt; {noreply, State} |
+        |  %%                                  {noreply, State, Timeout} |
+        |  %%                                  {stop, Reason, State}
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  handle_cast({replace, Value}, State) -&gt;
+<font color=red>     0..|      {noreply, State#state{value = Value}};</font>
+        |  handle_cast(delete, State) -&gt;
+<font color=red>     0..|      {stop, normal, State}.</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @private
+        |  %% @doc
+        |  %% Handling all non call/cast messages
+        |  %%
+        |  %% @spec handle_info(Info, State) -&gt; {noreply, State} |
+        |  %%                                   {noreply, State, Timeout} |
+        |  %%                                   {stop, Reason, State}
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  handle_info(_Info, State) -&gt;
+<font color=red>     0..|      {noreply, State}.</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @private
+        |  %% @doc
+        |  %% This function is called by a gen_server when it is about to
+        |  %% terminate. It should be the opposite of Module:init/1 and do any
+        |  %% necessary cleaning up. When it returns, the gen_server terminates
+        |  %% with Reason. The return value is ignored.
+        |  %%
+        |  %% @spec terminate(Reason, State) -&gt; void()
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  terminate(_Reason, _State) -&gt;
+<font color=red>     0..|      sc_store:delete(self()),</font>
+<font color=red>     0..|      ok.</font>
+        |  
+        |  %%--------------------------------------------------------------------
+        |  %% @private
+        |  %% @doc
+        |  %% Convert process state when code is changed
+        |  %%
+        |  %% @spec code_change(OldVsn, State, Extra) -&gt; {ok, NewState}
+        |  %% @end
+        |  %%--------------------------------------------------------------------
+        |  code_change(_OldVsn, State, _Extra) -&gt;
+<font color=red>     0..|      {ok, State}.</font>
+        |  
+        |  %%%===================================================================
+        |  %%% Internal functions
+        |  %%%===================================================================
+</pre>
+</body>
+</html>
