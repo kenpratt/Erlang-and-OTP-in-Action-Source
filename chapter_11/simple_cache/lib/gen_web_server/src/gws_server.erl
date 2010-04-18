@@ -189,8 +189,6 @@ handle_message({http_request,'PUT',_,_} = RequestLine, Headers, Body, CallBack, 
     CallBack:put(RequestLine, Headers, Body, UserState);
 handle_message({http_request, 'TRACE', _, _} = RequestLine, Headers, Body, CallBack, UserState) ->
     CallBack:head(RequestLine, Headers, Body, UserState);
-handle_message({http_request, 'CONNECT', _, _} = RequestLine, Headers, Body, CallBack, UserState) ->
-    CallBack:head(RequestLine, Headers, Body, UserState);
 handle_message({http_request, 'OPTIONS', _, _} = RequestLine, Headers, Body, CallBack, UserState) ->
     CallBack:options(RequestLine, Headers, Body, UserState);
 handle_message(RequestLine, Headers, Body, CallBack, UserState) ->

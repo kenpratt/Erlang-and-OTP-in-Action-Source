@@ -75,16 +75,16 @@ init([Callback, IP, Port, UserArgs]) ->
     Shutdown = brutal_kill,
     Type = worker,
     
-    SocOpts = [binary, {active, false}, {packet, http_bin}, {reuseaddr, true}],
     case IP of
 	default_ip -> 
-	    {ok, LSock} = gen_tcp:listen(Port, SocOpts);
+	    error_logger:info_msg("Start connection supervisor with ~p ~p ~p~n", [Port, Callback, UserArgs]),
+	    {ok, LSock} = gen_tcp:listen(Port, [binary, {active, false}, {packet, http_bin}, {reuseaddr, true}]);
 	IP ->
-	    {ok, LSock} = gen_tcp:listen(Port, [{ip, IP}|SocOpts])
+	    error_logger:info_msg("Start connection supervisor with ~p ~p ~p ~p~n", [IP, Port, Callback, UserArgs]),
+	    {ok, LSock} = gen_tcp:listen(Port, [binary, {active, false}, {packet, http_bin}, {reuseaddr, true}, {ip, IP}])
     end,
 
-    WebSocket = {gws_server, {gws_server, start_link,
-			      [Callback, LSock, UserArgs]},
+    WebSocket = {gws_server, {gws_server, start_link, [Callback, LSock, UserArgs]},
 		 Restart, Shutdown, Type, [gws_server]},
     
     {ok, {SupFlags, [WebSocket]}}.
