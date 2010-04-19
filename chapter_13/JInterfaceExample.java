@@ -23,20 +23,20 @@ public class JInterfaceExample {
   }
 
   private void process() {
-    while (true) {                                                       
+    while (true) {
       try {
         OtpErlangObject msg = mbox.receive();
-	OtpErlangTuple t = (OtpErlangTuple) msg;
-	OtpErlangPid from = (OtpErlangPid) t.elementAt(0);               
-	String name = ((OtpErlangString) t.elementAt(1)).stringValue();  
-	String greeting = "Greetings from Java, " + name + "!";          
-	OtpErlangString replystr = new OtpErlangString(greeting);        
-	OtpErlangTuple outMsg =
-	  new OtpErlangTuple(new OtpErlangObject[]{mbox.self(),          
+        OtpErlangTuple t = (OtpErlangTuple) msg;
+        OtpErlangPid from = (OtpErlangPid) t.elementAt(0);
+        String name = ((OtpErlangString) t.elementAt(1)).stringValue();
+        String greeting = "Greetings from Java, " + name + "!";
+        OtpErlangString replystr = new OtpErlangString(greeting);
+        OtpErlangTuple outMsg =
+          new OtpErlangTuple(new OtpErlangObject[]{mbox.self(),
                                                    replystr});
-        mbox.send(from, outMsg);                                         
+        mbox.send(from, outMsg);
       } catch (Exception e) {
-	  System.out.println("caught error: " + e);                      
+          System.out.println("caught error: " + e);
       }
     }
   }
