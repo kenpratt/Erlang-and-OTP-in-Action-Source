@@ -13,6 +13,8 @@
 
 -export([behaviour_info/1]).
 
+-include("eunit.hrl").
+
 behaviour_info(callbacks) ->
     [{init,1},
      {head, 3},
@@ -22,7 +24,6 @@ behaviour_info(callbacks) ->
      {post, 4},
      {put, 4},
      {trace, 4},
-     {connect, 4},
      {other_methods, 4}];
 behaviour_info(_Other) ->
     undefined.
@@ -53,16 +54,15 @@ start_link(Callback, Port, UserArgs) ->
 http_reply(Code, Headers, Body) when is_list(Body) ->
     http_reply(Code, Headers, list_to_binary(Body));
 http_reply(Code, Headers, Body) ->
-    list_to_binary([list_to_binary(lists:flatten(["HTTP/1.1 ", code_to_code_and_string(Code), "\r\n",
-     format_headers(Headers),
-     "Content-Length: ", integer_to_list(size(Body)), 
-     "\r\n\r\n"])),
-     Body]).
+    list_to_binary(["HTTP/1.1 ", code_to_code_and_string(Code), "\r\n",
+		    format_headers(Headers),
+		    "Content-Length: ", integer_to_list(size(Body)), 
+		    "\r\n\r\n", Body]).
 
 %% @spec (Code) -> ok
 %% @equiv http_reply(Code, [{"Content-Type", "text/html"}], "") 
 http_reply(Code) ->
-    http_reply(Code, [{"Content-Type", "text/html"}], "").
+    http_reply(Code, [{"Content-Type", "text/html"}], <<>>).
 
 format_headers([{Header, Value}|T]) ->
     [tos(Header), ": ", Value, "\r\n"|format_headers(T)];
@@ -143,3 +143,11 @@ code_to_code_and_string(507) -> "507 Insufficient Storage";
 code_to_code_and_string(509) -> "509 Bandwidth Limit Exceeded";
 code_to_code_and_string(510) -> "510 Not Extended";
 code_to_code_and_string(Code) -> Code.
+
+http_reply_test() ->
+    Reply = <<"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 0\r\n\r\n">>,
+    ?assertMatch(Reply, http_reply(200)),
+    Reply2 = <<"HTTP/1.1 200 OK\r\nheader: value\r\nContent-Length: 8\r\n\r\nall good">>,
+    ?assertMatch(Reply2, http_reply(200, [{"header", "value"}], "all good")),
+    ?assertMatch(Reply2, http_reply(200, [{"header", "value"}], <<"all good">>)),
+    ?assertMatch(Reply2, http_reply(200, [{"header", "value"}], ["all"," good"])).
