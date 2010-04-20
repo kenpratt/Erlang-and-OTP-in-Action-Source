@@ -1,0 +1,1 @@
+java -cp .:hadoop-0.20.2/hadoop-0.20.2-core.jar:hbase-0.20.3/hbase-0.20.3.jar:commons-logging-1.1.1/commons-logging-1.1.1.jar:zookeeper-3.2.2/zookeeper-3.2.2.jar:apache-log4j-1.2.16/log4j-1.2.16.jar:/usr/local/lib/erlang/lib/jinterface-1.5.1/priv/OtpErlang.jar HBaseNode hbase secret
