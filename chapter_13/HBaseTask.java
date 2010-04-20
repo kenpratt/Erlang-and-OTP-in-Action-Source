@@ -6,19 +6,20 @@ public class HBaseTask implements Runnable {
   private OtpErlangPid from;
   private OtpErlangRef ref;
   private String action;
-  private String key;
-  private byte[] data;
+  private byte[] key;
+  private byte[] value;
 
   public HBaseTask(OtpMbox mbox, HBaseConnector conn,
                    OtpErlangPid from, OtpErlangRef ref,
-                   String action, String key, byte[] data) {
+                   String action, byte[] key, byte[] value) {
     super();
     this.mbox = mbox;
     this.conn = conn;
+    this.from = from;
     this.ref = ref;
     this.action = action;
     this.key = key;
-    this.data = data;
+    this.value = value;
   }
 
   public void run() {
@@ -29,29 +30,30 @@ public class HBaseTask implements Runnable {
         doPut();
       } else if (action.equals("delete")) {
         doDelete();
+      } else {
+        System.out.println("invalid action: " + action);
       }
     } catch (Exception e) {
-   // FIXME this error message is not handled by the Erlang code!
-        OtpErlangTuple reply =
-          new OtpErlangTuple(new OtpErlangObject[] {
-                                   new OtpErlangAtom("error"), ref,
-                                   new OtpErlangList(e.getMessage())
-                                 });
-        mbox.send(from, reply);
+        System.out.println("caught error: " + e);
     }
   }
 
   private void doGet() throws Exception {
-    byte[] data = conn.get(key);
+    OtpErlangObject result;
+    try {
+      result = new OtpErlangBinary(conn.get(key));
+    } catch (NullPointerException e) {
+      result = new OtpErlangAtom("not_found");
+    }
     OtpErlangTuple reply = new OtpErlangTuple(new OtpErlangObject[] {
-                                 new OtpErlangAtom("reply"), ref, 
-                                 new OtpErlangBinary(data)
+                                 new OtpErlangAtom("reply"), ref,
+                                 result
                                });
     mbox.send(from, reply);
   }
 
   private void doPut() throws Exception {
-    conn.put(key, data);
+    conn.put(key, value);
     OtpErlangTuple reply = new OtpErlangTuple(new OtpErlangObject[] {
                                  new OtpErlangAtom("reply"), ref, 
                                  new OtpErlangAtom("ok")
@@ -68,4 +70,3 @@ public class HBaseTask implements Runnable {
     mbox.send(from, reply);
   }
 }
-

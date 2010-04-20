@@ -28,7 +28,6 @@ public class HBaseNode {
 
   // message format: { Action, FromPID, UniqueRef, Key [, Value] }
   private void process() {
-    byte[] data;
     while (true) {
       try {
 	OtpErlangObject msg = mbox.receive();
@@ -36,12 +35,15 @@ public class HBaseNode {
 	String action = ((OtpErlangAtom) t.elementAt(0)).atomValue();
 	OtpErlangPid from = (OtpErlangPid) t.elementAt(1);
 	OtpErlangRef ref = (OtpErlangRef) t.elementAt(2);
-	String key = ((OtpErlangList) t.elementAt(3)).toString();
+	byte[] key = ((OtpErlangBinary) t.elementAt(3)).binaryValue();
+	byte[] value;
 	HBaseTask task = null;
-	if (t.arity() == 5) {
-	  data = ((OtpErlangBinary) t.elementAt(4)).binaryValue();
-	  task = new HBaseTask(mbox, conn, from, ref, action, key, data);
-	} else if (t.arity() == 4) {
+	if (t.arity() == 5 && action.equals("put")) {
+	  value = ((OtpErlangBinary) t.elementAt(4)).binaryValue();
+	  task = new HBaseTask(mbox, conn, from, ref, action, key, value);
+	} else if (t.arity() == 4 && action.equals("get")) {
+	  task = new HBaseTask(mbox, conn, from, ref, action, key, null);
+	} else if (t.arity() == 4 && action.equals("delete")) {
 	  task = new HBaseTask(mbox, conn, from, ref, action, key, null);
 	} else {
 	  System.out.println("invalid request: " + t);

@@ -4,7 +4,8 @@
 
 put(Node, Key, Value) ->
   Ref = make_ref(),
-  {hbase_server, Node} ! {put, self(), Ref, Key, term_to_binary(Value)},
+  {hbase_server, Node} ! {put, self(), Ref, term_to_binary(Key),
+                          term_to_binary(Value)},
   receive
     {reply, Ref, ok} ->
       ok
@@ -14,7 +15,7 @@ put(Node, Key, Value) ->
 
 get(Node, Key) ->
   Ref = make_ref(),
-  {hbase_server, Node} ! {get, self(), Ref, Key},
+  {hbase_server, Node} ! {get, self(), Ref, term_to_binary(Key)},
   receive
     {reply, Ref, Value} ->
       {ok, Value}
@@ -24,7 +25,7 @@ get(Node, Key) ->
 
 delete(Node, Key) ->
   Ref = make_ref(),
-  {hbase_server, Node} ! {delete, self(), Ref, Key},
+  {hbase_server, Node} ! {delete, self(), Ref, term_to_binary(Key)},
   receive
     {reply, Ref, ok} ->
       ok
