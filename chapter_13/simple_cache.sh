@@ -4,6 +4,6 @@
 # (update the erts version number below to match your release)
 ./erts-5.7.4/bin/erl \
     -sname cache \
-    -boot ./releases/0.1.0/start \
-    -config ./releases/0.1.0/sys \
+    -boot ./releases/0.2.0/start \
+    -config ./releases/0.2.0/sys \
     -detached
