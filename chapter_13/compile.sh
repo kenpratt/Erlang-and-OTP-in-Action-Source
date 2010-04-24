@@ -1,3 +1,4 @@
+#!/bin/sh
 erlc -o ./simple_cache/ebin ./simple_cache/src/*.erl
 erlc -o ./resource_discovery/ebin ./resource_discovery/src/*.erl
 javac -cp /usr/local/lib/erlang/lib/jinterface-1.5.1/priv/OtpErlang.jar Test.java
