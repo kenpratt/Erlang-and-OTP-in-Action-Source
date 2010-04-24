@@ -45,7 +45,7 @@ init(_UserArgs) ->
 %% @spec (InitialRequestLine, Head, Body) -> Response
 %% @end
 %%--------------------------------------------------------------------
-get({_, _, {abs_path, [$/|Key]}, _}, _Head, _UserState) ->
+get({_, _, {abs_path, <<$/,Key/binary>>}, _}, _Head, _UserState) ->
     error_logger:info_msg("Key ~p~n", [Key]),
     case simple_cache:lookup(Key) of
 	{ok, Value} ->
@@ -61,7 +61,7 @@ get({_, _, {abs_path, [$/|Key]}, _}, _Head, _UserState) ->
 %% @spec (InitialRequestLine, Head, Body, UserArgs) -> Response
 %% @end
 %%--------------------------------------------------------------------
-put({_, _, {abs_path, [$/|Key]}, _}, _Head, Body, _UserState) ->
+put({_, _, {abs_path, <<$/,Key/binary>>}, _}, _Head, Body, _UserState) ->
     simple_cache:insert(Key, Body),
     gen_web_server:http_reply(200).
 
@@ -70,7 +70,7 @@ put({_, _, {abs_path, [$/|Key]}, _}, _Head, Body, _UserState) ->
 %% @spec (InitialRequestLine, Head, Body) -> Response
 %% @end
 %%--------------------------------------------------------------------
-delete({_, _, {abs_path, [$/|Key]}, _}, _Head, _UserState) ->
+delete({_, _, {abs_path, <<$/,Key/binary>>}, _}, _Head, _UserState) ->
     simple_cache:delete(Key),
     gen_web_server:http_reply(200).
 
