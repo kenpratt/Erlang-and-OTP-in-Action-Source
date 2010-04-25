@@ -82,7 +82,7 @@ handle_call(get_count, _From, State) ->
     {reply, {ok, State#state.request_count}, State}.
 
 handle_cast(stop, State) ->
-    {stop, ok, State}.
+    {stop, normal, State}.
 
 handle_info({tcp, Socket, RawData}, State) ->
     do_rpc(Socket, RawData),

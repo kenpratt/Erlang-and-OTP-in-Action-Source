@@ -116,7 +116,7 @@ handle_call(get_count, _From, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_cast(stop, State) ->
-    {stop, ok, State}.
+    {stop, normal, State}.
 
 %%--------------------------------------------------------------------
 %% @private
