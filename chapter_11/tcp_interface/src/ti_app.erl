@@ -16,8 +16,8 @@ start(_StartType, _StartArgs) ->
         {ok, Pid} ->
             ti_sup:start_child(),
             {ok, Pid};
-        Error ->
-            Error
+        Other ->
+            {error, Other}
     end.
 
 stop(_State) ->
