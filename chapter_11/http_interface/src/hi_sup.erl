@@ -18,7 +18,7 @@ start_child() ->
 
 init([Port]) ->
     Server = {hi_server, {hi_server, start_link, [Port]},
-              temporary, brutal_kill, worker, [hi_server]},
+              permanent, 2000, worker, [hi_server]},
     Children = [Server],
-    RestartStrategy = {simple_one_for_one, 0, 1},
+    RestartStrategy = {one_for_one, 0, 1},
     {ok, {RestartStrategy, Children}}.
