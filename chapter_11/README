@@ -1,0 +1,38 @@
+To build this code, run the following commands:
+
+erlc -o ./tcp_interface/ebin ./tcp_interface/src/*.erl
+erlc -o ./simple_cache/ebin ./simple_cache/src/*.erl
+erlc -o ./resource_discovery/ebin ./resource_discovery/src/*.erl
+
+Start the simple_cache system as in chapter 10 (including a contact node),
+but also include the path to tcp_interface/ebin:
+
+erl -sname contact1 -detached
+erl -sname mynode -pa ./tcp_interface/ebin -pa ./simple_cache/ebin -pa ./resource_discovery/ebin/ -boot ./simple_cache -config sys
+
+(The node discovery waits a few seconds at startup.)
+
+Then, from the Erlang shell, run:
+
+1> application:start(tcp_interface).
+
+You can now e.g. run appmon:start() to inspect the system and check that
+tcp_interface is running alongside the other applications.
+
+After that, open another terminal window and use telnet
+to connect to the application, like this:
+
+$ telnet localhost 1055
+Trying 127.0.0.1...
+Connected to localhost.localdomain.
+Escape character is '^]'.
+lookup[foo]
+OK:{error,not_found}.
+insert[foo,bar]
+OK:ok.
+lookup[foo]
+OK:{ok,bar}.
+delete[foo]
+OK:ok.
+lookup[foo]
+OK:{error,not_found}.
