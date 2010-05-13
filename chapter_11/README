@@ -26,7 +26,7 @@ tcp_interface is running alongside the other applications.
 After that, open another terminal window and use telnet
 to connect to the TCP interface, like this:
 
-$ telnet localhost 1055
+$ telnet localhost 1155
 Trying 127.0.0.1...
 Connected to localhost.localdomain.
 Escape character is '^]'.
@@ -44,13 +44,13 @@ OK:{error,not_found}.
 Or, use a command-line HTTP client like 'curl' to connect
 to the HTTP interface:
 
-$ curl -T put.txt http://localhost:1056/xyzzy
-$ curl http://localhost:1056/xyzzy
+$ curl -T put.txt http://localhost:1156/xyzzy
+$ curl http://localhost:1156/xyzzy
 Erlang
 
 (if the file put.txt contains the text "Erlang"). You can
 also use a normal web browser and enter a URL such as
-http://localhost:1056/xyzzy in the address field. Note that
+http://localhost:1156/xyzzy in the address field. Note that
 the HTTP interface stores text as binaries in the cache,
 so for example, to look up the key xyzzy from the TCP
 interface, you have to enter the query like this:

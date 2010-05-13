@@ -4,7 +4,7 @@
 
 -export([start/2, stop/1]).
 
--define(DEFAULT_PORT, 1056).
+-define(DEFAULT_PORT, 1156).
 
 start(_StartType, _StartArgs) ->
     Port = case application:get_env(http_interface, port) of

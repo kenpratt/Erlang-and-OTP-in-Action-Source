@@ -4,7 +4,7 @@
 
 -export([start/2, stop/1]).
 
--define(DEFAULT_PORT, 1055).
+-define(DEFAULT_PORT, 1155).
 
 start(_StartType, _StartArgs) ->
     Port = case application:get_env(tcp_interface, port) of
