@@ -25,7 +25,7 @@ init_tables() ->
     mnesia:create_table(contributor,
        [{type, bag}, {attributes, record_info(fields, contributor)}]).
 
-insert_user(Id, Name, ProjectTitles) ->
+insert_user(Id, Name, ProjectTitles) when ProjectTitles =/= [] ->
     User = #user{id = Id, name = Name},
     Fun = fun() ->
             mnesia:write(User),
