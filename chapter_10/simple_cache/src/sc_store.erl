@@ -29,12 +29,11 @@ lookup(Key) ->
     end.
 
 delete(Pid) ->
-    try
-        [#key_to_pid{} = Record] =
-            mnesia:dirty_index_read(key_to_pid, Pid, #key_to_pid.pid),
-        mnesia:dirty_delete_object(Record)
-    catch
-        _C:_E -> ok
+    case mnesia:dirty_index_read(key_to_pid, Pid, #key_to_pid.pid) of
+        [#key_to_pid{} = Record] ->
+            mnesia:dirty_delete_object(Record);
+        _ ->
+            ok
     end.
 
 dynamic_db_init([]) ->
