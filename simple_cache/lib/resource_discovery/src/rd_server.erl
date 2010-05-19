@@ -11,7 +11,7 @@
 %%%       a type of service that you have on the network may be identified by it's node name
 %%%       in which case you might have a resource type of 'my_service' of which there may be
 %%%       many node names representing resources such as {my_service, myservicenode@myhost}. 
-%%% @type resource_instance() =  pid() The resource being managed.
+%%% @type resource_instance() =  pid(). The resource being managed.
 %%%
 %%% @end
 %%% Created : 21 Feb 2009 by Martin Logan <martinjlogan@Macintosh.local>

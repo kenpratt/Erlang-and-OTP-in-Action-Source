@@ -156,6 +156,7 @@ handle_cast({replace, Value}, State) ->
 handle_cast(delete, State) ->
     {stop, normal, State}.
 
+
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
