@@ -8,7 +8,6 @@
 %% Supervisor callbacks
 -export([init/1]).
 
--define(SERVER, ?MODULE).
 -define(DEFAULT_PORT, 1156).
 
 %%%===================================================================
