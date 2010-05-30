@@ -8,8 +8,6 @@
 %% Supervisor callbacks
 -export([init/1]).
 
--define(DEFAULT_PORT, 1156).
-
 %%%===================================================================
 %%% API functions
 
@@ -26,10 +24,6 @@ start_child(Server) ->
 %%% Supervisor callbacks
 
 init([Callback, IP, Port, UserArgs]) ->
-    ActualPort = case Port of
-                     Port when is_integer(Port) -> Port;
-                     undefined -> ?DEFAULT_PORT
-                 end,
     BasicSockOpts = [binary,
                      {active, false},
                      {packet, http_bin},
@@ -38,7 +32,7 @@ init([Callback, IP, Port, UserArgs]) ->
                    undefined -> BasicSockOpts;
                    _         -> [{ip,IP} | BasicSockOpts]
                end,
-    {ok, LSock} = gen_tcp:listen(ActualPort, SockOpts),
+    {ok, LSock} = gen_tcp:listen(Port, SockOpts),
     Server = {gws_server, {gws_server, start_link,
                            [Callback, LSock, UserArgs]},
               temporary, brutal_kill, worker, [gws_server]},
